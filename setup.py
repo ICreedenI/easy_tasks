@@ -16,6 +16,7 @@
 # twine upload --verbose dist/*
 
 from setuptools import setup, find_packages
+import versioneer
 import codecs
 import os
 
@@ -24,13 +25,13 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.1'
 DESCRIPTION = 'Normal python class tasks like sorting, closet/furthest value, dublicates, ...'
 
 # Setting up
 setup(
     name="easy_tasks",
-    version=VERSION,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author="André Herber",
     author_email="andre.herber.programming@gmail.com",
     # url="https://github.com/ICreedenI/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",

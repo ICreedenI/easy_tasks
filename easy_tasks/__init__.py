@@ -6,4 +6,6 @@ from .string_transformation import upper_case_first_letter_of_word, upper_case_f
 from .unpack import unpack_list
 
 
-__version__ = '0.0.1'
+
+from . import _version
+__version__ = _version.get_versions()['version']

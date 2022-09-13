@@ -9,7 +9,6 @@
 # pip install -e .
 
 
-
 # twine upload dist/*
 # twine upload --skip-existing dist/*
 # twine upload --verbose --skip-existing dist/*
@@ -25,7 +24,9 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-DESCRIPTION = 'Normal python class tasks like sorting, closet/furthest value, dublicates, ...'
+DESCRIPTION = (
+    "Normal python class tasks like sorting, closet/furthest value, dublicates, ..."
+)
 
 # Setting up
 setup(
@@ -39,11 +40,12 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
-    install_requires=["colorful_terminal", 
-                        "exception_details", 
-                        "natsort",
-                        ],
-    keywords=['python'],
+    install_requires=[
+        "colorful_terminal",
+        "exception_details",
+        "natsort",
+    ],
+    keywords=["python"],
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
@@ -52,5 +54,5 @@ setup(
         "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
         "Operating System :: Microsoft :: Windows",
-    ]
+    ],
 )

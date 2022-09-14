@@ -1,7 +1,11 @@
-LICENSE.txt
+LICENSE
+MANIFEST.in
 README.md
+setup.cfg
 setup.py
+versioneer.py
 easy_tasks/__init__.py
+easy_tasks/_version.py
 easy_tasks/closest_furthest_value.py
 easy_tasks/dublicates.py
 easy_tasks/percentage.py

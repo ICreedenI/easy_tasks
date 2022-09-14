@@ -1,7 +1,4 @@
-
-
-
-def upper_case_first_letter_of_word(String:str, lower_case_words:list=[]):
+def upper_case_first_letter_of_word(String: str, lower_case_words: list = []):
     """Get a string with your string transformed to have the firts letter in upper case.
 
     Args:
@@ -16,15 +13,18 @@ def upper_case_first_letter_of_word(String:str, lower_case_words:list=[]):
     for w in wörter:
         dw = ""
         for iw, cw in enumerate(w):
-            if iw == 0: dw += cw.upper()
-            else: dw += cw
-        if w.lower() in [w.lower() for w in lower_case_words]: dw = w.lower()
+            if iw == 0:
+                dw += cw.upper()
+            else:
+                dw += cw
+        if w.lower() in [w.lower() for w in lower_case_words]:
+            dw = w.lower()
         _ws.append(dw)
     dn = " ".join(_ws)
     return dn
 
 
-def upper_case_first_letter_of_words(List:list[str], lower_case_words:list=[]):
+def upper_case_first_letter_of_words(List: list[str], lower_case_words: list = []):
     """Get a list with the strings transformed to have the firts letter in upper case in your list.
 
     Args:
@@ -39,7 +39,3 @@ def upper_case_first_letter_of_words(List:list[str], lower_case_words:list=[]):
         dn = upper_case_first_letter_of_word(n, lower_case_words)
         result.append(dn)
     return result
-
-
-
-

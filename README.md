@@ -55,4 +55,4 @@ To not get annoyed by simple recurring tasks I created this small library.
 
 
 ## Links
-[GitHub](https://github.com/ICreedenI/easy_tasks) | either [PyPI](https://pypi.org/project/easy_tasks/) or [PyPI](https://pypi.org/project/easy-tasks/)
+[GitHub](https://github.com/ICreedenI/easy_tasks) | [PyPI](https://pypi.org/project/easy-tasks/)

@@ -48,3 +48,7 @@ To not get annoyed by simple recurring tasks I created this small library.
 
 - **unpack_list**  
   Dissolve inner lists and tuples of nested list and tuples.
+
+
+## Links
+[GitHub](https://github.com/ICreedenI/easy_tasks) | either [PyPI](https://pypi.org/project/easy_tasks/) or [PyPI](https://pypi.org/project/easy-tasks/)

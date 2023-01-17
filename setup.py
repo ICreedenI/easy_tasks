@@ -15,7 +15,6 @@
 # twine upload --verbose dist/*
 
 from setuptools import setup, find_packages
-import versioneer
 import codecs
 import os
 
@@ -31,8 +30,7 @@ DESCRIPTION = (
 # Setting up
 setup(
     name="easy_tasks",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version="0.0.4",
     author="André Herber",
     author_email="andre.herber.programming@gmail.com",
     # url="https://github.com/ICreedenI/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",

@@ -16,8 +16,7 @@ from .string_transformation import (
     upper_case_first_letter_of_words,
 )
 from .unpack import unpack_list
+from .list_printer import pretty_print_list, pretty_print_nested_list
 
 
-from . import _version
-
-__version__ = _version.get_versions()["version"]
+__version__ = "0.0.4"

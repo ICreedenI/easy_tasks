@@ -18,5 +18,8 @@ from .string_transformation import (
 from .unpack import unpack_list
 from .list_printer import pretty_print_list, pretty_print_nested_list
 
+from .help_with_pickle import pickle_pack, pickle_unpack
+from .help_with_json import dump_as_json, get_from_json
+
 
 __version__ = "0.0.4"

@@ -8,6 +8,7 @@ To not get annoyed by simple recurring tasks I created this small library.
 
 ## Installation
 - `pip install easy-tasks`
+- You will need to install to_precision from github to use all the percentage stuff. For this visit https://github.com/BebeSparkelSparkel/to-precision, go to the latest release, which might be https://github.com/BebeSparkelSparkel/to-precision/releases/tag/0.0.1, and download the .tar.gz. With `pip install <path to .tar.gz>` you can finish your installation.
 
 ## Usage
 - `furthest_value_in_list`  

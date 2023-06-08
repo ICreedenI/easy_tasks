@@ -22,4 +22,4 @@ from .help_with_pickle import pickle_pack, pickle_unpack
 from .help_with_json import dump_as_json, get_from_json
 
 
-__version__ = "0.0.5"
+__version__ = "0.0.8"

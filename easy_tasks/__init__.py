@@ -21,5 +21,12 @@ from .list_printer import pretty_print_list, pretty_print_nested_list
 from .help_with_pickle import pickle_pack, pickle_unpack
 from .help_with_json import dump_as_json, get_from_json
 
+from .zipping import (
+    make_zip_archive_with_shutil,
+    unpack_zip_archive_with_shutil,
+    zip_dir_with_zipfile,
+    unzip_with_zipfile,
+)
+
 
 __version__ = "0.0.8"

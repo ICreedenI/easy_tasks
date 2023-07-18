@@ -82,7 +82,7 @@ def round_significantly_std_notation(number: float, significant_digits: int) -> 
     return nstr
 
 
-def round_significantly_sci_notation(number: float, significant_digits: int) -> str:
+def round_significantly_sci_notation(number: float, significant_digits: int, e_for_10: str = "E") -> str:
     """Round a number to have only significant digits. Output is in scientific notation with the n-th power of ten as En.
 
     Args:
@@ -111,12 +111,12 @@ def round_significantly_sci_notation(number: float, significant_digits: int) -> 
     estr = ""
     num = number
     if e <= 0:
-        estr = f"E{e}"
+        estr = f"{e_for_10}{e}"
         num = number / 10**e
         nstr = round_relative_to_decimal(num, significant_digits - 1) + estr
     else:
         e -= 1
-        estr = f"E{e}"
+        estr = f"{e_for_10}{e}"
         num = number / 10**e
         nstr = round_relative_to_decimal(num, significant_digits - 1) + estr
     if negative:

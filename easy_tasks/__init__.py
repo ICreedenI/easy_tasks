@@ -28,5 +28,8 @@ from .zipping import (
     unzip_with_zipfile,
 )
 
+from .rounding import *
+from .types import *
+
 
 __version__ = "0.0.8"

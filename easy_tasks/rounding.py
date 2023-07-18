@@ -46,15 +46,18 @@ def round_significantly_std_notation(number: float, significant_digits: int) -> 
         negative = True
         number *= -1
     snum = str(number)
-    dpos = spos = snum.find(".")
-    if dpos == -1:
-        dpos = len(snum)
-        snum += "."
-    for i, c in enumerate(snum):
-        if c != "." and c != "0":
-            spos = i
-            break
-    e = dpos - spos
+    if not "e" in snum.lower():
+        dpos = spos = snum.find(".")
+        if dpos == -1:
+            dpos = len(snum)
+            snum += "."
+        for i, c in enumerate(snum):
+            if c != "." and c != "0":
+                spos = i
+                break
+        e = dpos - spos
+    else:
+        e = int(snum.lower().split("e")[-1])
     num = number
     if e < 1:
         num = number / 10**e
@@ -94,14 +97,17 @@ def round_significantly_sci_notation(number: float, significant_digits: int) -> 
         negative = True
         number *= -1
     snum = str(number)
-    dpos = spos = snum.find(".")
-    if dpos == -1:
-        dpos = len(snum)
-    for i, c in enumerate(snum):
-        if c != "." and c != "0":
-            spos = i
-            break
-    e = dpos - spos
+    if not "e" in snum.lower():
+        dpos = spos = snum.find(".")
+        if dpos == -1:
+            dpos = len(snum)
+        for i, c in enumerate(snum):
+            if c != "." and c != "0":
+                spos = i
+                break
+        e = dpos - spos
+    else:
+        e = int(snum.lower().split("e")[-1])
     estr = ""
     num = number
     if e <= 0:
@@ -116,4 +122,12 @@ def round_significantly_sci_notation(number: float, significant_digits: int) -> 
     if negative:
         nstr = "-" + nstr
     return nstr
+
+
+
+if __name__ == "__main__":
+    numbers = [100/10**i for i in range(1, 20)]
+    # numbers = [100*10**i for i in range(1, 20)]
+    for i in numbers:
+        print(i, "\t", round_significantly_sci_notation(i, 2))
 

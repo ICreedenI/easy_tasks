@@ -30,6 +30,14 @@ from .zipping import (
 
 from .rounding import *
 from .types import *
+from .filesystem import (
+    delete_empty_directories,
+    get_disc_informations,
+    move_and_integrate_directory,
+    get_directory_size,
+    get_all_subdir_sizes,
+    copied_paths_to_list,
+)
 
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"

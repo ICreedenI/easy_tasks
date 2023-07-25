@@ -1,13 +1,4 @@
 
-def dot_referenced_rounding(number: float, r: int) -> str:
-    number = round(number, r)
-    sn = str(number)
-    if not "." in sn:
-        sn += "."
-    while len(sn.split(".")[-1]) < r:
-        sn = sn + "0"
-    return sn
-
 
 def round_relative_to_decimal(number: float, digits: int) -> str:
     """Round a number to the specified number of decimal trailing digits.
@@ -122,12 +113,3 @@ def round_significantly_sci_notation(number: float, significant_digits: int, e_f
     if negative:
         nstr = "-" + nstr
     return nstr
-
-
-
-if __name__ == "__main__":
-    numbers = [100/10**i for i in range(1, 20)]
-    # numbers = [100*10**i for i in range(1, 20)]
-    for i in numbers:
-        print(i, "\t", round_significantly_sci_notation(i, 2))
-

@@ -1,13 +1,6 @@
-try:
-    from to_precision import std_notation
-except:
-    raise ImportError(
-        "'to_precision' could not be imported please make sure you installed it.\n\tLink to GitHub rep: https://github.com/BebeSparkelSparkel/to-precision\n\tLink to Bitbucket: https://bitbucket.org/william_rusnack/to-precision/src/master/"
-    )
-
-
 from colorful_terminal import TermAct, colored_print
 from exception_details import print_exception_details
+from .rounding import round_relative_to_decimal
 
 
 def get_percentage_as_fitted_string(
@@ -18,18 +11,24 @@ def get_percentage_as_fitted_string(
         perc = 100
     else:
         perc = count / total * 100
-    if perc < 0.01:
-        perc = "  " + str(std_notation(perc, -2 + round_to))
+    if perc == 0:
+        perc = "  0"
+        if round_to > 0:
+            perc += "."
+            for i in range(round_to):
+                perc += "0"
+    elif perc < 0.01:
+        perc = "  " + str(round_relative_to_decimal(perc, -2 + round_to))
     elif perc < 0.1:
-        perc = "  " + str(std_notation(perc, -1 + round_to))
+        perc = "  " + str(round_relative_to_decimal(perc, -1 + round_to))
     elif perc < 1:
-        perc = "  " + str(std_notation(perc, 0 + round_to))
+        perc = "  " + str(round_relative_to_decimal(perc, 0 + round_to))
     elif perc < 10:
-        perc = "  " + str(std_notation(perc, 1 + round_to))
+        perc = "  " + str(round_relative_to_decimal(perc, 1 + round_to))
     elif perc < 100:
-        perc = " " + str(std_notation(perc, 2 + round_to))
+        perc = " " + str(round_relative_to_decimal(perc, 2 + round_to))
     else:
-        perc = str(std_notation(perc, 3 + round_to))
+        perc = str(round_relative_to_decimal(perc, 3 + round_to))
     if with_percentage_symbol:
         perc += " %"
     return perc

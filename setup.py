@@ -46,7 +46,6 @@ setup(
         "pywin32",
         "clipboard",
         "varname",
-        "zipfile",
     ],
     keywords=["python"],
     classifiers=[

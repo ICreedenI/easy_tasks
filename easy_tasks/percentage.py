@@ -83,21 +83,40 @@ def main_and_sub_progress_printer(
     maincount_str = str(maincount).rjust(length)
     subcount_str = str(subcount).rjust(length)
 
+    # try:
+    #     print(f"{pre_string}")
+    #     print(
+    #         f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
+    #         + TermAct.Erase_in_Line()
+    #     )
+    #     print(
+    #         f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
+    #         + TermAct.Erase_in_Line()
+    #     )
+    #     if post_string != "":
+    #         print(post_string)
+    # except Exception as e:
+    #     print("\n" * 20)
+    #     print_exception_details(e)
+    #     print("\n" * 20)
     try:
+        TermAct.Clear_Current_Line()
         print(f"{pre_string}")
+        TermAct.Clear_Current_Line()
         print(
             f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
-            + TermAct.Erase_in_Line()
         )
+        TermAct.Clear_Current_Line()
         print(
             f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
-            + TermAct.Erase_in_Line()
         )
-        if post_string != "":
-            print(post_string)
+        TermAct.Clear_Current_Line()
+        print(post_string)
+        print(TermAct.Cursor_Up * 4 + "\r", end="")
     except Exception as e:
         print("\n" * 20)
         print_exception_details(e)
         print("\n" * 20)
     if maincount == maintotal and subcount == subtotal:
+        print("\n" * 3)
         print(TermAct.Show_Cursor(), end="")

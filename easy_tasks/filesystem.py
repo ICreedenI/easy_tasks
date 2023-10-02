@@ -5,6 +5,7 @@ from string import ascii_uppercase
 from var_print import varp
 import win32api
 from clipboard import paste
+from colorful_terminal import *
 from .rounding import round_relative_to_decimal
 from .percentage import get_percentage_as_fitted_string
 
@@ -30,7 +31,7 @@ def delete_empty_directories(
                 if not os.listdir(dir_path):
                     os.rmdir(dir_path)
                     if reverb:
-                        print(f"Deleted empty directory: {dir_path}")
+                        colored_print(f"Deleted empty directory: {Fore.YELLOW}{dir_path}")
                     removed.append(dir_path)
     else:
         for f in os.listdir(directory):
@@ -39,7 +40,7 @@ def delete_empty_directories(
                 if os.listdir(fp) == []:
                     os.rmdir(dir_path)
                     if reverb:
-                        print(f"Deleted empty directory: {dir_path}")
+                        colored_print(f"Deleted empty directory: {Fore.YELLOW}{dir_path}")
                     removed.append(dir_path)
     return removed
 

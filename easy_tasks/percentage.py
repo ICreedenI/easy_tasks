@@ -11,23 +11,6 @@ def get_percentage_as_fitted_string(
         perc = 100
     else:
         perc = count / total * 100
-    # if perc == 0:
-    #     perc = "  0"
-    #     if round_to > 0:
-    #         perc += "."
-    #         for i in range(round_to):
-    #             perc += "0"
-    # elif perc < 0.01:
-    #     perc = "  " + str(round_relative_to_decimal(perc, -2 + round_to))
-    # elif perc < 0.1:
-    #     perc = "  " + str(round_relative_to_decimal(perc, -1 + round_to))
-    # elif perc < 1:
-    #     perc = "  " + str(round_relative_to_decimal(perc, 0 + round_to))
-    # elif perc < 10:
-    #     perc = "  " + str(round_relative_to_decimal(perc, 1 + round_to))
-    # elif perc < 100:
-    #     perc = " " + str(round_relative_to_decimal(perc, 2 + round_to))
-    # else:
     perc = str(round_relative_to_decimal(perc, round_to))
     if with_percentage_symbol:
         perc += " %"
@@ -60,7 +43,6 @@ def main_and_sub_progress_printer(
 ):
     if maincount == 0 and subcount == 0:
         print(TermAct.Hide_Cursor(), end="")
-    # if subtotal == 0: subcount = 0
 
     if post_string == "":
         lines = 3
@@ -81,42 +63,33 @@ def main_and_sub_progress_printer(
     maintotal_str = str(maintotal).rjust(length)
     subtotal_str = str(subtotal).rjust(length)
     maincount_str = str(maincount).rjust(length)
-    subcount_str = str(subcount).rjust(length)
+    _subcount = subcount if subtotal != 0 else 0
+    subcount_str = str(_subcount).rjust(length)
 
-    # try:
-    #     print(f"{pre_string}")
-    #     print(
-    #         f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
-    #         + TermAct.Erase_in_Line()
-    #     )
-    #     print(
-    #         f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
-    #         + TermAct.Erase_in_Line()
-    #     )
-    #     if post_string != "":
-    #         print(post_string)
-    # except Exception as e:
-    #     print("\n" * 20)
-    #     print_exception_details(e)
-    #     print("\n" * 20)
     try:
+        # s = ""
+        # s += f"{pre_string}" + "\n"
+        # s += f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}" + "\n"
+        # s += f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}" + "\n"
+        # s += post_string + "\n"
+        # print(s + "\r", end="")
+        s = f"{pre_string}"
         TermAct.Clear_Current_Line()
-        print(f"{pre_string}")
+        print(s)
+        s = f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
         TermAct.Clear_Current_Line()
-        print(
-            f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
-        )
+        print(s)
+        s = f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
         TermAct.Clear_Current_Line()
-        print(
-            f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
-        )
+        print(s)
+        s = post_string
         TermAct.Clear_Current_Line()
-        print(post_string)
-        print(TermAct.Cursor_Up * 4 + "\r", end="")
+        print(s)
     except Exception as e:
         print("\n" * 20)
         print_exception_details(e)
         print("\n" * 20)
-    if maincount == maintotal and subcount == subtotal:
-        print("\n" * 3)
+    if maincount == maintotal and (subcount == subtotal or subtotal == 0):
         print(TermAct.Show_Cursor(), end="")
+    else:
+        print(TermAct.Cursor_Up * 4 + "\r", end="")

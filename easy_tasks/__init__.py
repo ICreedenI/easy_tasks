@@ -38,6 +38,7 @@ from .filesystem import (
     get_all_subdir_sizes,
     copied_paths_to_list,
 )
+from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.12"
+__version__ = "0.0.14"

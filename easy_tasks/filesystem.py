@@ -6,7 +6,7 @@ from var_print import varp
 import win32api
 from clipboard import paste
 from colorful_terminal import *
-from .rounding import round_relative_to_decimal
+from .rounding import round_relative_to_decimal, round_significantly_std_notation
 from .percentage import get_percentage_as_fitted_string
 
 
@@ -135,25 +135,6 @@ def move_and_integrate_directory(
     return fails
 
 
-def get_directory_size(
-    dirpath,
-    unit: str = "GB",
-):
-    """unit can be B / MB / GB"""
-    if unit == "B":
-        u = 1
-    elif unit == "MB":
-        u = 10**6
-    elif unit == "GB":
-        u = 10**9
-    else:
-        raise ValueError("unit not recognized")
-    return (
-        sum([os.path.getsize(os.path.join(dirpath, f)) for f in os.listdir(dirpath)])
-        / u
-    )
-
-
 def get_all_subdir_sizes(
     dirpath: str,
     unit: str = "GB",
@@ -162,6 +143,7 @@ def get_all_subdir_sizes(
     print_it: bool = False,
     percentages: bool = True,
     with_sum: bool = True,
+    as_string: bool = True,
 ):
     """Get a dictionary of the sizes of all the contents of the given directory.
 
@@ -204,7 +186,10 @@ def get_all_subdir_sizes(
         add_space = extr * " "
         summe += size
         size = round_relative_to_decimal(size, round_to).strip(".")
-        value = f"{add_space}{size} {unit}"
+        if as_string:
+            value = f"{add_space}{size} {unit}"
+        else:
+            value = size
         subdir_to_size[d] = value
         nachkomma = len(value.split(".")[-1])
         if nachkomma > max_nachkomma:
@@ -216,12 +201,15 @@ def get_all_subdir_sizes(
 
     size = round_relative_to_decimal(summe, round_to).strip(".")
     if with_sum:
-        subdir_to_size["<Summe>"] = f"{size} {unit}"
+        if as_string:
+            subdir_to_size["<Sum>"] = f"{size} {unit}"
+        else:
+            subdir_to_size["<Sum>"] = size
 
     if percentages:
         subdir_to_size_perc = {}
         for sd, size in subdir_to_size.items():
-            if sd != "<Summe>":
+            if sd != "<Sum>":
                 perc = get_percentage_as_fitted_string(
                     float(size.strip(" " + unit)), summe, 2
                 )
@@ -229,9 +217,10 @@ def get_all_subdir_sizes(
                 if nachkomma == len(size):
                     nachkomma = len(unit)
                 spc = max_nachkomma - nachkomma + 4
-                subdir_to_size_perc[sd] = size + " " * spc + perc
-                # if sd == "Elo":
-                #     varp(sd, value)
+                if as_string:
+                    subdir_to_size_perc[sd] = size + " " * spc + perc
+                else:
+                    subdir_to_size_perc[sd] = size, perc
             else:
                 subdir_to_size_perc[sd] = size
     if print_it:
@@ -242,8 +231,287 @@ def get_all_subdir_sizes(
     return subdir_to_size
 
 
+def get_directory_size(
+    start_path=".", unit: str = None, round_to: int = 2, round_to_precision: bool = True, as_string: bool = True
+):
+    "unit can be none -> float or B / MB / GB -> str"
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+    if round_to_precision:
+        rounding = round_significantly_std_notation
+    else:
+        rounding = round
+    if unit == None:
+        total_size = total_size
+    elif unit == "B":
+        total_size = rounding(total_size / 1, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    elif unit == "MB":
+        total_size = rounding(total_size / 10**6, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    elif unit == "GB":
+        total_size = rounding(total_size / 10**9, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    else:
+        raise ValueError("unit not recognized")
+
+    return total_size
+
+
+def get_file_size(
+    file_path: str, unit: str = None, round_to: int = 2, round_to_precision: bool = True, as_string: bool = True
+):
+    "unit can be none -> float or B / MB / GB -> str"
+    total_size = os.path.getsize(file_path)
+    if round_to_precision:
+        rounding = round_significantly_std_notation
+    else:
+        rounding = round
+    if unit == None:
+        total_size = total_size
+    elif unit == "B":
+        total_size = rounding(total_size / 1, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    elif unit == "MB":
+        total_size = rounding(total_size / 10**6, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    elif unit == "GB":
+        total_size = rounding(total_size / 10**9, round_to)
+        if as_string:
+            total_size = f"{total_size} {unit}"
+    else:
+        raise ValueError("unit not recognized")
+
+    return total_size
+
+
 def copied_paths_to_list():
     "path copied in Windows to a list"
     urls = paste().replace("\r", "").split("\n")
     urls = [u[1:-1] for u in urls]
     return urls
+
+
+def copy_with_metadata(
+    src_path, dest_path, integrate_files=True, skip_existing=True, rename_existing=True
+):
+    # Check if the source path exists
+    if not os.path.exists(src_path):
+        print(f"Source path '{src_path}' does not exist.")
+        return
+
+    # Check if the source path is a file or directory
+    if os.path.isfile(src_path):
+        # Check if the file already exists in the destination
+        if skip_existing and os.path.exists(dest_path):
+            print(f"File '{src_path}' already exists in '{dest_path}'. Skipping.")
+        elif rename_existing and os.path.exists(dest_path):
+            base, ext = os.path.splitext(os.path.basename(dest_path))
+            i = 1
+            while os.path.exists(dest_path):
+                new_filename = f"{base} ({i}){ext}"
+                dest_path = os.path.join(os.path.dirname(dest_path), new_filename)
+                i += 1
+            print(
+                f"File '{src_path}' already exists in '{dest_path}'. Renaming to '{os.path.basename(dest_path)}'."
+            )
+            shutil.copy2(src_path, dest_path)
+        else:
+            # Copy the file with metadata
+            shutil.copy2(src_path, dest_path)
+    elif os.path.isdir(src_path):
+        # Check if the destination directory exists
+        if os.path.exists(dest_path):
+            if integrate_files:
+                # Integrate files if the destination directory exists
+                for item in os.listdir(src_path):
+                    s = os.path.join(src_path, item)
+                    d = os.path.join(dest_path, item)
+                    if os.path.isdir(s):
+                        # Recursively copy subdirectories
+                        copy_with_metadata(
+                            s, d, integrate_files, skip_existing, rename_existing
+                        )
+                    else:
+                        # Check if the file already exists in the destination
+                        if skip_existing and os.path.exists(d):
+                            print(f"File '{s}' already exists in '{d}'. Skipping.")
+                        elif rename_existing and os.path.exists(d):
+                            base, ext = os.path.splitext(item)
+                            i = 1
+                            while os.path.exists(d):
+                                new_filename = f"{base} ({i}){ext}"
+                                d = os.path.join(dest_path, new_filename)
+                                i += 1
+                            print(
+                                f"File '{s}' already exists in '{d}'. Renaming to '{os.path.basename(d)}'."
+                            )
+                            shutil.copy2(s, d)
+                        else:
+                            # Copy individual files with metadata
+                            shutil.copy2(s, d)
+            else:
+                print(
+                    f"Destination directory '{dest_path}' already exists. Use integrate_files=True to integrate files."
+                )
+        else:
+            # Copy the directory with metadata
+            shutil.copytree(src_path, dest_path, copy_function=shutil.copy2)
+    else:
+        print(f"Source path '{src_path}' is neither a file nor a directory.")
+
+
+def copy_without_metadata(
+    src_path, dest_path, integrate_files=True, skip_existing=True, rename_existing=True
+):
+    # Check if the source path exists
+    if not os.path.exists(src_path):
+        print(f"Source path '{src_path}' does not exist.")
+        return
+
+    # Check if the source path is a file or directory
+    if os.path.isfile(src_path):
+        # Check if the file already exists in the destination
+        if skip_existing and os.path.exists(dest_path):
+            print(f"File '{src_path}' already exists in '{dest_path}'. Skipping.")
+        elif rename_existing and os.path.exists(dest_path):
+            base, ext = os.path.splitext(os.path.basename(dest_path))
+            i = 1
+            while os.path.exists(dest_path):
+                new_filename = f"{base} ({i}){ext}"
+                dest_path = os.path.join(os.path.dirname(dest_path), new_filename)
+                i += 1
+            print(
+                f"File '{src_path}' already exists in '{dest_path}'. Renaming to '{os.path.basename(dest_path)}'."
+            )
+            shutil.copy(src_path, dest_path)
+        else:
+            # Copy the file without metadata
+            shutil.copy(src_path, dest_path)
+    elif os.path.isdir(src_path):
+        # Check if the destination directory exists
+        if os.path.exists(dest_path):
+            if integrate_files:
+                # Integrate files if the destination directory exists
+                for item in os.listdir(src_path):
+                    s = os.path.join(src_path, item)
+                    d = os.path.join(dest_path, item)
+                    if os.path.isdir(s):
+                        # Recursively copy subdirectories
+                        copy_without_metadata(
+                            s, d, integrate_files, skip_existing, rename_existing
+                        )
+                    else:
+                        # Check if the file already exists in the destination
+                        if skip_existing and os.path.exists(d):
+                            print(f"File '{s}' already exists in '{d}'. Skipping.")
+                        elif rename_existing and os.path.exists(d):
+                            base, ext = os.path.splitext(item)
+                            i = 1
+                            while os.path.exists(d):
+                                new_filename = f"{base} ({i}){ext}"
+                                d = os.path.join(dest_path, new_filename)
+                                i += 1
+                            print(
+                                f"File '{s}' already exists in '{d}'. Renaming to '{os.path.basename(d)}'."
+                            )
+                            shutil.copy(s, d)
+                        else:
+                            # Copy individual files without metadata
+                            shutil.copy(s, d)
+            else:
+                print(
+                    f"Destination directory '{dest_path}' already exists. Use integrate_files=True to integrate files."
+                )
+        else:
+            # Copy the directory without metadata
+            shutil.copytree(src_path, dest_path)
+    else:
+        print(f"Source path '{src_path}' is neither a file nor a directory.")
+
+
+def copy_without_metadata_using_copyfile(
+    src_path, dest_path, integrate_files=True, skip_existing=True, rename_existing=True
+):
+    # Check if the source path exists
+    if not os.path.exists(src_path):
+        print(f"Source path '{src_path}' does not exist.")
+        return
+
+    # Check if the source path is a file or directory
+    if os.path.isfile(src_path):
+        # Check if the file already exists in the destination
+        if skip_existing and os.path.exists(dest_path):
+            print(f"File '{src_path}' already exists in '{dest_path}'. Skipping.")
+        elif rename_existing and os.path.exists(dest_path):
+            base, ext = os.path.splitext(os.path.basename(dest_path))
+            i = 1
+            while os.path.exists(dest_path):
+                new_filename = f"{base} ({i}){ext}"
+                dest_path = os.path.join(os.path.dirname(dest_path), new_filename)
+                i += 1
+            print(
+                f"File '{src_path}' already exists in '{dest_path}'. Renaming to '{os.path.basename(dest_path)}'."
+            )
+            shutil.copyfile(src_path, dest_path)
+        else:
+            # Copy the file without metadata
+            shutil.copyfile(src_path, dest_path)
+    elif os.path.isdir(src_path):
+        # Check if the destination directory exists
+        if os.path.exists(dest_path):
+            if integrate_files:
+                # Integrate files if the destination directory exists
+                for item in os.listdir(src_path):
+                    s = os.path.join(src_path, item)
+                    d = os.path.join(dest_path, item)
+                    if os.path.isdir(s):
+                        # Recursively copy subdirectories
+                        copy_without_metadata(
+                            s, d, integrate_files, skip_existing, rename_existing
+                        )
+                    else:
+                        # Check if the file already exists in the destination
+                        if skip_existing and os.path.exists(d):
+                            print(f"File '{s}' already exists in '{d}'. Skipping.")
+                        elif rename_existing and os.path.exists(d):
+                            base, ext = os.path.splitext(item)
+                            i = 1
+                            while os.path.exists(d):
+                                new_filename = f"{base} ({i}){ext}"
+                                d = os.path.join(dest_path, new_filename)
+                                i += 1
+                            print(
+                                f"File '{s}' already exists in '{d}'. Renaming to '{os.path.basename(d)}'."
+                            )
+                            shutil.copyfile(s, d)
+                        else:
+                            # Copy individual files without metadata
+                            shutil.copyfile(s, d)
+            else:
+                print(
+                    f"Destination directory '{dest_path}' already exists. Use integrate_files=True to integrate files."
+                )
+        else:
+            # Copy the directory without metadata
+            shutil.copytree(src_path, dest_path, copy_function=shutil.copyfile)
+    else:
+        print(f"Source path '{src_path}' is neither a file nor a directory.")
+
+
+def delete_path(path):
+    try:
+        shutil.rmtree(path)
+    except:
+        os.remove(path)
+

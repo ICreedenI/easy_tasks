@@ -34,6 +34,7 @@ from .filesystem import (
     delete_empty_directories,
     get_disc_informations,
     move_and_integrate_directory,
+    move_file,
     get_directory_size,
     get_all_subdir_sizes,
     copied_paths_to_list,
@@ -41,4 +42,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.15"
+__version__ = "0.0.16"

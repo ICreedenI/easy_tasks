@@ -92,6 +92,27 @@ def get_disc_informations(print_out: bool = True):
     return out
 
 
+def move_file(
+    filepath: str,
+    targetpath: str,
+):
+    """Move the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
+
+    Args:
+        filepath (str): file to move
+        targetpath (str): target / destination
+    """
+    content = os.listdir(targetpath)
+    filename = os.path.basename(filepath)
+    fn, fe = os.path.splitext(filename)
+    counter = 2
+    while filename in content:
+        filename = fn + f" {counter}" + fe
+        counter += 1
+    nfp = os.path.join(targetpath, filename)
+    shutil.move(filepath, nfp)
+
+
 def move_and_integrate_directory(
     dirpath: str,
     targetpath: str,
@@ -116,7 +137,6 @@ def move_and_integrate_directory(
                 npdp = os.path.join(targetpath, *structure[: len(structure) - 1])
                 if not os.path.isdir(npdp):
                     os.makedirs(npdp)
-            # nfp = os.path.join(targetpath, *structure)
             shutil.move(fp, targetpath)
         except:
             if os.path.isdir(fp):

@@ -234,7 +234,7 @@ class ProgressBar:
         )
         return main_bar
 
-    def update(self, amount, name=None):
+    def update(self, amount=1, name=None):
         if amount:
             self.last_updated = time()
         else:

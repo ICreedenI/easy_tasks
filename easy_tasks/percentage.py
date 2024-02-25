@@ -268,8 +268,7 @@ class ProgressBar:
 
         self.output = output
 
-        if not self.constant_output:
-            self.output_progress()
+        self.output_progress()
 
     def output_progress(self):
         colored_print(TermAct.hide_cursor() + self.output, end="\r")

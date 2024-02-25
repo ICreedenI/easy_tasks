@@ -178,7 +178,7 @@ class ProgressBar:
         self.ratio = (
             round(self.progress / self.total, self.precision)
             if not self.total == 0
-            else 0
+            else 1
         )
         bars_amount = math.floor(self.ratio * self.total_bar_length)
         no_bars = self.total_bar_length - bars_amount

@@ -38,10 +38,10 @@ def delete_empty_directories(
             fp = os.path.join(directory, f)
             if os.path.isdir(fp):
                 if os.listdir(fp) == []:
-                    os.rmdir(dir_path)
+                    os.rmdir(fp)
                     if reverb:
-                        colored_print(f"Deleted empty directory: {Fore.YELLOW}{dir_path}")
-                    removed.append(dir_path)
+                        colored_print(f"Deleted empty directory: {Fore.YELLOW}{fp}")
+                    removed.append(fp)
     return removed
 
 
@@ -95,13 +95,21 @@ def get_disc_informations(print_out: bool = True):
 def move_file(
     filepath: str,
     targetpath: str,
+    use_shutil_move: bool = True,
+    copy_function: callable = shutil.copyfile,
 ):
     """Move the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
     Args:
         filepath (str): file to move
-        targetpath (str): target / destination
+        targetpath (str): target directory
+        use_shutil_move (bool): since shutil.move gave me trouble ... -> will use copy_function and os.remove
+        copy_function (callable): used in shutil.moved or separately with os.remove
     """
+    if os.path.isfile(targetpath):
+        targetpath = os.path.dirname(targetpath)
+    if not os.path.isdir(targetpath):
+        os.makedirs(targetpath)
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
@@ -110,7 +118,38 @@ def move_file(
         filename = fn + f" {counter}" + fe
         counter += 1
     nfp = os.path.join(targetpath, filename)
-    shutil.move(filepath, nfp)
+    if use_shutil_move: 
+        shutil.move(filepath, nfp, shutil.copyfile)
+    else:
+        copy_function(filepath, nfp)
+        os.remove(filepath)
+
+
+def copy_file(
+    filepath: str,
+    targetpath: str,
+    copy_function: callable = shutil.copyfile,
+):
+    """Copy the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
+
+    Args:
+        filepath (str): file to move
+        targetpath (str): target directory
+        copy_function (callable): shutil copy function
+    """
+    if os.path.isfile(targetpath):
+        targetpath = os.path.dirname(targetpath)
+    if not os.path.isdir(targetpath):
+        os.makedirs(targetpath)
+    content = os.listdir(targetpath)
+    filename = os.path.basename(filepath)
+    fn, fe = os.path.splitext(filename)
+    counter = 2
+    while filename in content:
+        filename = fn + f" {counter}" + fe
+        counter += 1
+    nfp = os.path.join(targetpath, filename)
+    copy_function(filepath, nfp)
 
 
 def move_and_integrate_directory(

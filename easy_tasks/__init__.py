@@ -35,6 +35,7 @@ from .filesystem import (
     get_disc_informations,
     move_and_integrate_directory,
     move_file,
+    copy_file,
     get_directory_size,
     get_all_subdir_sizes,
     copied_paths_to_list,

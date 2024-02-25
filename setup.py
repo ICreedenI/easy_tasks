@@ -46,6 +46,7 @@ setup(
         "pywin32",
         "clipboard",
         "varname",
+        "know_the_time",
     ],
     keywords=["python"],
     classifiers=[

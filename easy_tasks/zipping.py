@@ -52,7 +52,7 @@ def zip_dir_with_zipfile(folderpath: str, zip_path: str):
         folderpath (str): path to folder to zip
         zip_path (str): path for zip file with name
     """
-    TermAct.Hide_Cursor()
+    TermAct.hide_cursor_action()
 
     def zipdir(path, ziph):
         # ziph is zipfile handle
@@ -86,7 +86,7 @@ def zip_dir_with_zipfile(folderpath: str, zip_path: str):
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipdir(folderpath, zipf)
     zipf.close()
-    TermAct.Show_Cursor()
+    TermAct.show_cursor_action()
 
 
 def unzip_with_zipfile(extract_dir: str, zip_path: str):

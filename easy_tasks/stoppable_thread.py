@@ -51,7 +51,7 @@ class ThreadWithExc(threading.Thread):
 
         raise AssertionError("could not determine the thread's id")
 
-    def raiseExc(self, exctype):
+    def raiseExc(self, exctype=Exception):
         """Raises the given exception type in the context of this thread.
 
         If the thread is busy in a system call (time.sleep(),

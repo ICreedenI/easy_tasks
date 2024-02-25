@@ -1,5 +1,11 @@
-from colorful_terminal import TermAct, colored_print
+import math
+from threading import Thread
+from time import sleep, time
+
+import know_the_time
+from colorful_terminal import Fore, TermAct, colored_print
 from exception_details import print_exception_details
+
 from .rounding import round_relative_to_decimal
 
 
@@ -20,7 +26,7 @@ def get_percentage_as_fitted_string(
 def progress_printer(
     count: int, total: int, pre_string: str = "Progress: ", post_string: str = ""
 ):
-    TermAct.Clear_Current_Line()
+    TermAct.clear_current_line_action()
     print(
         f"\r{pre_string}{str(count).rjust(len(str(total)))} / {total}    ({get_percentage_as_fitted_string(count, total)}){post_string}",
         end="",
@@ -42,7 +48,7 @@ def main_and_sub_progress_printer(
     subpost_string: str = "",
 ):
     if maincount == 0 and subcount == 0:
-        print(TermAct.Hide_Cursor(), end="")
+        print(TermAct.hide_cursor(), end="")
 
     if post_string == "":
         lines = 3
@@ -50,7 +56,7 @@ def main_and_sub_progress_printer(
         lines = 4 + post_string.count("\n")
     if maincount != 0 and subcount != 0:
         for i in range(lines):
-            colored_print(TermAct.Cursor_Previous_Line, end="")
+            colored_print(TermAct.cursor_previous_line, end="")
     if len(mainpre_string) < len(subpre_string):
         mainpre_string = mainpre_string.ljust(len(subpre_string))
     elif len(mainpre_string) > len(subpre_string):
@@ -74,22 +80,303 @@ def main_and_sub_progress_printer(
         # s += post_string + "\n"
         # print(s + "\r", end="")
         s = f"{pre_string}"
-        TermAct.Clear_Current_Line()
+        TermAct.clear_current_line_action()
         print(s)
         s = f"\r{mainpre_string}{maincount_str} / {maintotal_str}  ({get_percentage_as_fitted_string(maincount, maintotal)}){mainpost_string}"
-        TermAct.Clear_Current_Line()
+        TermAct.clear_current_line_action()
         print(s)
         s = f"\r{subpre_string}{subcount_str} / {subtotal_str}  ({get_percentage_as_fitted_string(subcount, subtotal)}){subpost_string}"
-        TermAct.Clear_Current_Line()
+        TermAct.clear_current_line_action()
         print(s)
         s = post_string
-        TermAct.Clear_Current_Line()
+        TermAct.clear_current_line_action()
         print(s)
     except Exception as e:
         print("\n" * 20)
         print_exception_details(e)
         print("\n" * 20)
     if maincount == maintotal and (subcount == subtotal or subtotal == 0):
-        print(TermAct.Show_Cursor(), end="")
+        print(TermAct.show_cursor(), end="")
     else:
-        print(TermAct.Cursor_Up * 4 + "\r", end="")
+        print(TermAct.cursor_up * 4 + "\r", end="")
+
+
+class ProgressBar:
+    def __init__(
+        self,
+        total: float,
+        prefix: str = "Progress: ",
+        prefix_color: tuple = (127, 184, 0),
+        suffix: str = "",
+        suffix_color: tuple = (12, 99, 231),
+        show_progress: bool = True,
+        progress_color: tuple = (255, 234, 0),
+        show_percentage: bool = True,
+        percentage_color: tuple = (255, 180, 0),
+        show_timer: bool = True,
+        timer_color: tuple = (247, 127, 0),
+        timer_prefix: str = "",
+        timer_with_millisec: bool = False,
+        show_delta_timer: bool = True,
+        delta_timer_color: tuple = (246, 81, 29),
+        delta_timer_prefix: str = "Δ: ",
+        bar_type: str = "━",
+        total_bar_length: int = 50,
+        bar_color: tuple = (0, 166, 237),
+        background_color: tuple = (77, 77, 77),
+        vanish_with_finish: bool = False,
+        auto_start: bool = True,
+        indentation: int = 0,
+        indentation_block: str = "    ",
+        constant_output: bool = False,
+        constant_output_rate: float = 0.1,
+        precision: int = 5,
+        spacing: str = "  "
+    ) -> None:
+        self.progress = 0
+        self.total = total
+        self.prefix = prefix
+        self.prefix_color = prefix_color
+        self.suffix = suffix
+        self.suffix_color = suffix_color
+        self.show_progress = show_progress
+        self.progress_color = progress_color
+        self.show_percentage = show_percentage
+        self.percentage_color = percentage_color
+        self.show_timer = show_timer
+        self.timer_color = timer_color
+        self.timer_prefix = timer_prefix
+        self.timer_with_millisec = timer_with_millisec
+        self.show_delta_timer = show_delta_timer
+        self.delta_timer_color = delta_timer_color
+        self.delta_timer_prefix = delta_timer_prefix
+        self.bar_type = bar_type
+        self.total_bar_length = total_bar_length
+        self.bar_color = bar_color
+        self.background_color = background_color
+        self.vanish_with_finish = vanish_with_finish
+        self.subprogresses = {}
+        self.indentation = indentation
+        self.indentation_block = indentation_block
+        self.constant_output = constant_output
+        self.constant_output_rate = constant_output_rate
+        self.precision = precision
+        self.spacing = spacing
+        self.ratio = 0
+        self.lines = 1
+        self.finished = False
+        self._stop_output = False
+        self.starting_time = None
+        self.last_updated = None
+
+        if auto_start:
+            self.update(0)
+            if constant_output:
+                Thread(target=self._constant_output, daemon=True).start()
+
+    def get_progress_str(self):
+        self.ratio = (
+            round(self.progress / self.total, self.precision)
+            if not self.total == 0
+            else 0
+        )
+        bars_amount = math.floor(self.ratio * self.total_bar_length)
+        no_bars = self.total_bar_length - bars_amount
+        done_str = Fore.rgb(*self.bar_color) + bars_amount * self.bar_type
+        not_done_str = Fore.rgb(*self.background_color) + no_bars * self.bar_type
+        bar = done_str + not_done_str + self.spacing
+        _suffix = ""
+        if self.show_progress:
+            _suffix += (
+                Fore.rgb(*self.progress_color)
+                + f"{round(self.progress, self.precision)} / {self.total}".rjust(2*len(str(self.total))+2)
+                + self.spacing
+            )        
+        if self.show_percentage:
+            _suffix += (
+                Fore.rgb(*self.percentage_color)
+                + f"{round_relative_to_decimal(self.ratio*100, 2)} %".rjust(7)
+                + self.spacing
+            )
+        if self.show_timer:
+            if not self.starting_time:
+                self.starting_time = time()
+            timer = know_the_time.get_time_delta_prettystring(
+                self.starting_time,
+                time(),
+                include_milliseconds=self.timer_with_millisec,
+            )
+            _suffix += Fore.rgb(*self.timer_color) + self.timer_prefix + timer + self.spacing
+        if self.show_delta_timer:
+            if not self.last_updated:
+                self.last_updated = time()
+            delta_timer = know_the_time.get_time_delta_prettystring(
+                self.last_updated,
+                time(),
+                include_milliseconds=self.timer_with_millisec,
+            )
+            _suffix += (
+                Fore.rgb(*self.delta_timer_color)
+                + self.delta_timer_prefix
+                + delta_timer
+                + self.spacing
+            )
+        _suffix += Fore.rgb(*self.suffix_color) + self.suffix
+        main_bar = (
+            self.indentation * self.indentation_block
+            + Fore.rgb(*self.prefix_color)
+            + self.prefix
+            + bar
+            + _suffix
+        )
+        main_bar = "\n".join(
+            [line + TermAct.erase_in_line() for line in main_bar.splitlines()]
+        )
+        return main_bar
+
+    def update(self, amount, name=None):
+        if amount:
+            self.last_updated = time()
+        else:
+            amount = 0
+        if not name:
+            self.progress += amount
+        output = self.get_progress_str()
+
+        for sub_name, sub_progress in self.subprogresses.items():
+            sub_progress: ProgressBar
+            if sub_name == name and not sub_progress.finished:
+                sub_progress.progress += amount
+            elif sub_name == name:
+                sub_progress.progress = amount
+                sub_progress.finished = False
+            sub_bar = sub_progress.get_progress_str()
+            if sub_name == name and sub_progress.ratio == 1:
+                sub_progress.finished = True
+                sub_progress.starting_time = None
+            output += "\n" + sub_bar
+
+        self.lines = len(output.splitlines())
+        output += TermAct.cursor_up * (self.lines - 1)
+
+        self.finished = (
+            True
+            if all([s.ratio == 1 or s.finished for s in self.subprogresses.values()])
+            and self.ratio == 1
+            else False
+        )
+
+        self.output = output
+
+        if not self.constant_output:
+            self.output_progress()
+
+    def output_progress(self):
+        colored_print(TermAct.hide_cursor() + self.output, end="\r")
+
+        if self.finished == True:
+            print(TermAct.show_cursor(), end="")
+            print((self.lines - 1) * "\n")
+
+            if self.vanish_with_finish:
+                TermAct.clear_previous_line_action(self.lines)
+
+    def add_subprogress(
+        self,
+        name: str,
+        total: float,
+        prefix: str = "Progress: ",
+        prefix_color: tuple = (127, 184, 0),
+        suffix: str = "",
+        suffix_color: tuple = (12, 99, 231),
+        show_progress: bool = True,
+        progress_color: tuple = (255, 234, 0),
+        show_percentage: bool = True,
+        percentage_color: tuple = (255, 180, 0),
+        show_timer: bool = True,
+        timer_color: tuple = (247, 127, 0),
+        timer_prefix: str = "",
+        timer_with_millisec: bool = False,
+        show_delta_timer: bool = True,
+        delta_timer_color: tuple = (246, 81, 29),
+        delta_timer_prefix: str = "Δ: ",
+        bar_type: str = "━",
+        total_bar_length: int = 50,
+        bar_color: tuple = (0, 166, 237),
+        background_color: tuple = (77, 77, 77),
+        indentation: int = 0,
+        indentation_block: str = "    ",
+        constant_output: bool = False,
+        constant_output_rate: float = 0.1,
+        precision: int = 5,
+        spacing: str = "  "
+    ):
+        progress = ProgressBar(
+            total=total,
+            prefix=prefix,
+            prefix_color=prefix_color,
+            suffix=suffix,
+            suffix_color=suffix_color,
+            show_progress=show_progress,
+            progress_color=progress_color,
+            show_percentage=show_percentage,
+            percentage_color=percentage_color,
+            show_timer=show_timer,
+            timer_color=timer_color,
+            timer_prefix=timer_prefix,
+            timer_with_millisec=timer_with_millisec,
+            show_delta_timer=show_delta_timer,
+            delta_timer_color=delta_timer_color,
+            delta_timer_prefix=delta_timer_prefix,
+            bar_type=bar_type,
+            total_bar_length=total_bar_length,
+            bar_color=bar_color,
+            background_color=background_color,
+            vanish_with_finish=False,
+            auto_start=False,
+            indentation=indentation,
+            indentation_block=indentation_block,
+            constant_output=constant_output,
+            constant_output_rate=constant_output_rate,
+            precision=precision,
+            spacing=spacing,
+        )
+        self.subprogresses[name] = progress
+        return progress
+
+    def _constant_output(self):
+        while not self.finished and not self._stop_output:
+            self.update(None)
+            sleep(self.constant_output_rate)
+
+    def stop_output(self):
+        self._stop_output = True
+
+
+if __name__ == "__main__":
+    from random import randrange
+    total = randrange(5, 10)
+    total2 = randrange(5, 10)
+    progress = ProgressBar(
+        total,
+        suffix="0 done",
+        vanish_with_finish=False,
+        timer_with_millisec=True,  # , constant_output=True
+    )
+    p2 = progress.add_subprogress(
+        2,
+        total,
+        prefix="Subpprogress: ",
+        suffix="0 done",
+        timer_with_millisec=True,
+        indentation=1,
+    )
+
+    for i in range(total):
+        sleep(randrange(10) / 10)
+        for j in range(total2):
+            sleep(randrange(10) / 10)
+            progress.update(1, 2)
+            p2.suffix = str(j+1) + " done"
+        progress.update(1)
+        progress.suffix = str(i+1) + " done"

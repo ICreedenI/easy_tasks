@@ -9,6 +9,7 @@ from .percentage import (
     get_percentage_as_fitted_string,
     progress_printer,
     main_and_sub_progress_printer,
+    ProgressBar,
 )
 from .sorter import sorted_dict
 from .string_transformation import (
@@ -43,4 +44,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.16"
+__version__ = "0.0.17"

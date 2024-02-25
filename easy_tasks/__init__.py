@@ -34,14 +34,19 @@ from .types import *
 from .filesystem import (
     delete_empty_directories,
     get_disc_informations,
-    move_and_integrate_directory,
     move_file,
     copy_file,
-    get_directory_size,
+    move_and_integrate_directory,
     get_all_subdir_sizes,
+    get_directory_size,
+    get_file_size,
     copied_paths_to_list,
+    copy_with_metadata,
+    copy_without_metadata,
+    copy_without_metadata_using_copyfile,
+    delete_path,
 )
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.17"
+__version__ = "0.0.18"

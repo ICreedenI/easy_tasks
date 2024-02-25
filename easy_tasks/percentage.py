@@ -128,7 +128,7 @@ class ProgressBar:
         auto_start: bool = True,
         indentation: int = 0,
         indentation_block: str = "    ",
-        constant_output: bool = False,
+        constant_output: bool = True,
         constant_output_rate: float = 0.1,
         precision: int = 5,
         spacing: str = "  "
@@ -306,8 +306,6 @@ class ProgressBar:
         background_color: tuple = (77, 77, 77),
         indentation: int = 0,
         indentation_block: str = "    ",
-        constant_output: bool = False,
-        constant_output_rate: float = 0.1,
         precision: int = 5,
         spacing: str = "  "
     ):
@@ -336,8 +334,8 @@ class ProgressBar:
             auto_start=False,
             indentation=indentation,
             indentation_block=indentation_block,
-            constant_output=constant_output,
-            constant_output_rate=constant_output_rate,
+            constant_output=False,
+            constant_output_rate=0.1,
             precision=precision,
             spacing=spacing,
         )

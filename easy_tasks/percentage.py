@@ -166,7 +166,7 @@ class ProgressBar:
         precision: int = PRECISION,
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
-        _is_subprogress: bool = False,
+        _parent_progress = None,
     ) -> None:
         self.progress = 0
         self.total = total
@@ -198,7 +198,7 @@ class ProgressBar:
         self.precision = precision
         self.post_bar_spacing = post_bar_spacing
         self.spacing = spacing
-        self.is_subprogress = _is_subprogress
+        self._parent_progress = _parent_progress
         self.ratio = 0
         self.lines = 1
         self.finished = False
@@ -217,7 +217,6 @@ class ProgressBar:
             if not self.total == 0
             else 1
         )
-        if self.is_subprogress and self.ratio == 1 and self.vanish_with_finish: return ""
         bars_amount = math.floor(self.ratio * self.total_bar_length)
         no_bars = self.total_bar_length - bars_amount
         done_str = Fore.rgb(*self.bar_color) + bars_amount * self.bar_type
@@ -380,7 +379,7 @@ class ProgressBar:
             precision=precision,
             spacing=spacing,
             post_bar_spacing=post_bar_spacing,
-            _is_subprogress=True,
+            _parent_progress=self,
         )
         self.subprogresses[name] = progress
         return progress
@@ -393,6 +392,12 @@ class ProgressBar:
     def stop_output(self):
         self._stop_output = True
 
+    def completed(self):
+        self.progress = self.total
+        if self._parent_progress:
+            self._parent_progress.update(0)
+        else:
+            self.update(0)
 
 if __name__ == "__main__":
     from random import randrange

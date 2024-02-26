@@ -102,6 +102,10 @@ def main_and_sub_progress_printer(
 
 
 class ProgressBar:
+    """A progress bar printer with subprogress support and many customization options.
+
+    colorama and moviepy break this since they manipulate the terminal output.
+    """
     def __init__(
         self,
         total: float,
@@ -131,7 +135,8 @@ class ProgressBar:
         constant_output: bool = True,
         constant_output_rate: float = 0.1,
         precision: int = 5,
-        spacing: str = "  "
+        spacing: str = "  ",
+        post_bar_spacing: str = "  ",
     ) -> None:
         self.progress = 0
         self.total = total
@@ -161,6 +166,7 @@ class ProgressBar:
         self.constant_output = constant_output
         self.constant_output_rate = constant_output_rate
         self.precision = precision
+        self.post_bar_spacing = post_bar_spacing
         self.spacing = spacing
         self.ratio = 0
         self.lines = 1
@@ -184,12 +190,13 @@ class ProgressBar:
         no_bars = self.total_bar_length - bars_amount
         done_str = Fore.rgb(*self.bar_color) + bars_amount * self.bar_type
         not_done_str = Fore.rgb(*self.background_color) + no_bars * self.bar_type
-        bar = done_str + not_done_str + self.spacing
+        bar = done_str + not_done_str + self.post_bar_spacing
         _suffix = ""
         if self.show_progress:
+            prgrs = str(round(self.progress, self.precision)).rjust(len(str(self.total)))
             _suffix += (
                 Fore.rgb(*self.progress_color)
-                + f"{round(self.progress, self.precision)} / {self.total}".rjust(2*len(str(self.total))+2)
+                + f"{prgrs} / {self.total}".rjust(2*len(str(self.total))+2)
                 + self.spacing
             )        
         if self.show_percentage:
@@ -306,7 +313,8 @@ class ProgressBar:
         indentation: int = 0,
         indentation_block: str = "    ",
         precision: int = 5,
-        spacing: str = "  "
+        spacing: str = "  ",
+        post_bar_spacing: str = "",
     ):
         progress = ProgressBar(
             total=total,
@@ -337,6 +345,7 @@ class ProgressBar:
             constant_output_rate=0.1,
             precision=precision,
             spacing=spacing,
+            post_bar_spacing=post_bar_spacing,
         )
         self.subprogresses[name] = progress
         return progress
@@ -373,7 +382,7 @@ if __name__ == "__main__":
         sleep(randrange(10) / 10)
         for j in range(total2):
             sleep(randrange(10) / 10)
-            progress.update(1, 2)
             p2.suffix = str(j+1) + " done"
-        progress.update(1)
+            progress.update(1, 2)
         progress.suffix = str(i+1) + " done"
+        progress.update(1)

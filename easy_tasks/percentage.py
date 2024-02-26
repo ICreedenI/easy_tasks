@@ -101,42 +101,72 @@ def main_and_sub_progress_printer(
         print(TermAct.cursor_up * 4 + "\r", end="")
 
 
+PREFIX = "Progress: "
+SUBPREFIX = "Sub-Progress: "
+PREFIX_COLOR = (127, 184, 0)
+SUFFIX = ""
+SUFFIX_COLOR = (12, 99, 231)
+SHOW_PROGRESS = True
+PROGRESS_COLOR = (255, 234, 0)
+SHOW_PERCENTAGE = True
+PERCENTAGE_COLOR = (255, 180, 0)
+SHOW_TIMER = True
+TIMER_COLOR = (247, 127, 0)
+TIMER_PREFIX = ""
+TIMER_WITH_MILLISEC = False
+SHOW_DELTA_TIMER = True
+DELTA_TIMER_COLOR = (246, 81, 29)
+DELTA_TIMER_PREFIX = "Δ: "
+BAR_TYPE = "━"
+TOTAL_BAR_LENGTH = 50
+BAR_COLOR = (0, 166, 237)
+BACKGROUND_COLOR = (77, 77, 77)
+VANISH_WITH_FINISH = False
+INDENTATION = 0
+INDENTATION_BLOCK = "    "
+PRECISION = 5
+SPACING = "  "
+POST_BAR_SPACING = "  "
+
+
 class ProgressBar:
     """A progress bar printer with subprogress support and many customization options.
 
     colorama and moviepy break this since they manipulate the terminal output.
     """
+    post_bar_spacing = "  "
     def __init__(
         self,
         total: float,
-        prefix: str = "Progress: ",
-        prefix_color: tuple = (127, 184, 0),
-        suffix: str = "",
-        suffix_color: tuple = (12, 99, 231),
-        show_progress: bool = True,
-        progress_color: tuple = (255, 234, 0),
-        show_percentage: bool = True,
-        percentage_color: tuple = (255, 180, 0),
-        show_timer: bool = True,
-        timer_color: tuple = (247, 127, 0),
-        timer_prefix: str = "",
-        timer_with_millisec: bool = False,
-        show_delta_timer: bool = True,
-        delta_timer_color: tuple = (246, 81, 29),
-        delta_timer_prefix: str = "Δ: ",
-        bar_type: str = "━",
-        total_bar_length: int = 50,
-        bar_color: tuple = (0, 166, 237),
-        background_color: tuple = (77, 77, 77),
-        vanish_with_finish: bool = False,
+        prefix: str = PREFIX,
+        prefix_color: tuple = PREFIX_COLOR,
+        suffix: str = SUFFIX,
+        suffix_color: tuple = SUFFIX_COLOR,
+        show_progress: bool = SHOW_PROGRESS,
+        progress_color: tuple = PROGRESS_COLOR,
+        show_percentage: bool = SHOW_PERCENTAGE,
+        percentage_color: tuple = PERCENTAGE_COLOR,
+        show_timer: bool = SHOW_TIMER,
+        timer_color: tuple = TIMER_COLOR,
+        timer_prefix: str = TIMER_PREFIX,
+        timer_with_millisec: bool = TIMER_WITH_MILLISEC,
+        show_delta_timer: bool = SHOW_DELTA_TIMER,
+        delta_timer_color: tuple = DELTA_TIMER_COLOR,
+        delta_timer_prefix: str = DELTA_TIMER_PREFIX,
+        bar_type: str = BAR_TYPE,
+        total_bar_length: int = TOTAL_BAR_LENGTH,
+        bar_color: tuple = BAR_COLOR,
+        background_color: tuple = BACKGROUND_COLOR,
+        vanish_with_finish: bool = VANISH_WITH_FINISH,
         auto_start: bool = True,
-        indentation: int = 0,
-        indentation_block: str = "    ",
+        indentation: int = INDENTATION,
+        indentation_block: str = INDENTATION_BLOCK,
         constant_output: bool = True,
         constant_output_rate: float = 0.1,
-        precision: int = 5,
-        spacing: str = "  ",
-        post_bar_spacing: str = "  ",
+        precision: int = PRECISION,
+        spacing: str = SPACING,
+        post_bar_spacing: str = POST_BAR_SPACING,
+        _is_subprogress: bool = False,
     ) -> None:
         self.progress = 0
         self.total = total
@@ -168,6 +198,7 @@ class ProgressBar:
         self.precision = precision
         self.post_bar_spacing = post_bar_spacing
         self.spacing = spacing
+        self.is_subprogress = _is_subprogress
         self.ratio = 0
         self.lines = 1
         self.finished = False
@@ -186,6 +217,7 @@ class ProgressBar:
             if not self.total == 0
             else 1
         )
+        if self.is_subprogress and self.ratio == 1 and self.vanish_with_finish: return ""
         bars_amount = math.floor(self.ratio * self.total_bar_length)
         no_bars = self.total_bar_length - bars_amount
         done_str = Fore.rgb(*self.bar_color) + bars_amount * self.bar_type
@@ -261,7 +293,8 @@ class ProgressBar:
             if sub_name == name and sub_progress.ratio == 1:
                 sub_progress.finished = True
                 sub_progress.starting_time = None
-            output += "\n" + sub_bar
+            if sub_bar != "": 
+                output += "\n" + sub_bar
 
         self.lines = len(output.splitlines())
         output += TermAct.cursor_up * (self.lines - 1)
@@ -291,30 +324,31 @@ class ProgressBar:
         self,
         name: str,
         total: float,
-        prefix: str = "Progress: ",
-        prefix_color: tuple = (127, 184, 0),
-        suffix: str = "",
-        suffix_color: tuple = (12, 99, 231),
-        show_progress: bool = True,
-        progress_color: tuple = (255, 234, 0),
-        show_percentage: bool = True,
-        percentage_color: tuple = (255, 180, 0),
-        show_timer: bool = True,
-        timer_color: tuple = (247, 127, 0),
-        timer_prefix: str = "",
-        timer_with_millisec: bool = False,
-        show_delta_timer: bool = True,
-        delta_timer_color: tuple = (246, 81, 29),
-        delta_timer_prefix: str = "Δ: ",
-        bar_type: str = "━",
-        total_bar_length: int = 50,
-        bar_color: tuple = (0, 166, 237),
-        background_color: tuple = (77, 77, 77),
-        indentation: int = 0,
-        indentation_block: str = "    ",
-        precision: int = 5,
-        spacing: str = "  ",
-        post_bar_spacing: str = "",
+        prefix: str = SUBPREFIX,
+        prefix_color: tuple = PREFIX_COLOR,
+        suffix: str = SUFFIX,
+        suffix_color: tuple = SUFFIX_COLOR,
+        show_progress: bool = SHOW_PROGRESS,
+        progress_color: tuple = PROGRESS_COLOR,
+        show_percentage: bool = SHOW_PERCENTAGE,
+        percentage_color: tuple = PERCENTAGE_COLOR,
+        show_timer: bool = SHOW_TIMER,
+        timer_color: tuple = TIMER_COLOR,
+        timer_prefix: str = TIMER_PREFIX,
+        timer_with_millisec: bool = TIMER_WITH_MILLISEC,
+        show_delta_timer: bool = SHOW_DELTA_TIMER,
+        delta_timer_color: tuple = DELTA_TIMER_COLOR,
+        delta_timer_prefix: str = DELTA_TIMER_PREFIX,
+        bar_type: str = BAR_TYPE,
+        total_bar_length: int = TOTAL_BAR_LENGTH,
+        bar_color: tuple = BAR_COLOR,
+        background_color: tuple = BACKGROUND_COLOR,
+        vanish_with_finish: bool = VANISH_WITH_FINISH,
+        indentation: int = INDENTATION,
+        indentation_block: str = INDENTATION_BLOCK,
+        precision: int = PRECISION,
+        spacing: str = SPACING,
+        post_bar_spacing: str = POST_BAR_SPACING,
     ):
         progress = ProgressBar(
             total=total,
@@ -337,7 +371,7 @@ class ProgressBar:
             total_bar_length=total_bar_length,
             bar_color=bar_color,
             background_color=background_color,
-            vanish_with_finish=False,
+            vanish_with_finish=vanish_with_finish,
             auto_start=False,
             indentation=indentation,
             indentation_block=indentation_block,
@@ -346,6 +380,7 @@ class ProgressBar:
             precision=precision,
             spacing=spacing,
             post_bar_spacing=post_bar_spacing,
+            _is_subprogress=True,
         )
         self.subprogresses[name] = progress
         return progress

@@ -49,4 +49,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.24"
+__version__ = "0.0.25"

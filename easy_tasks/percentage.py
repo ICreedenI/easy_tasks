@@ -101,8 +101,6 @@ def main_and_sub_progress_printer(
         print(TermAct.cursor_up * 4 + "\r", end="")
 
 
-PREFIX = "Progress: "
-SUBPREFIX = "Sub-Progress: "
 PREFIX_COLOR = (127, 184, 0)
 SUFFIX = ""
 SUFFIX_COLOR = (12, 99, 231)
@@ -138,7 +136,7 @@ class ProgressBar:
     def __init__(
         self,
         total: float,
-        prefix: str = PREFIX,
+        prefix: str = "Progress: ",
         prefix_color: tuple = PREFIX_COLOR,
         suffix: str = SUFFIX,
         suffix_color: tuple = SUFFIX_COLOR,
@@ -323,7 +321,7 @@ class ProgressBar:
         self,
         name: str,
         total: float,
-        prefix: str = SUBPREFIX,
+        prefix: str = "Sub-Progress: ",
         prefix_color: tuple = PREFIX_COLOR,
         suffix: str = SUFFIX,
         suffix_color: tuple = SUFFIX_COLOR,

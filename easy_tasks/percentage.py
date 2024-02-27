@@ -132,7 +132,9 @@ class ProgressBar:
 
     colorama and moviepy break this since they manipulate the terminal output.
     """
+
     post_bar_spacing = "  "
+
     def __init__(
         self,
         total: float,
@@ -164,7 +166,7 @@ class ProgressBar:
         precision: int = PRECISION,
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
-        _parent_progress = None,
+        _parent_progress=None,
     ) -> None:
         self.progress = 0
         self.total = total
@@ -203,6 +205,7 @@ class ProgressBar:
         self._stop_output = False
         self.starting_time = None
         self.last_updated = None
+        self.progress_precision = 0
 
         if auto_start:
             self.update(0)
@@ -215,6 +218,14 @@ class ProgressBar:
             if not self.total == 0
             else 1
         )
+        progress = round(self.progress, self.precision)
+        progress_precision = (
+            len(str(progress).split(".")[-1])
+            if "." in str(progress)
+            else 0
+        )
+        if progress_precision > self.progress_precision:
+            self.progress_precision = progress_precision
         bars_amount = math.floor(self.ratio * self.total_bar_length)
         no_bars = self.total_bar_length - bars_amount
         done_str = Fore.rgb(*self.bar_color) + bars_amount * self.bar_type
@@ -222,12 +233,17 @@ class ProgressBar:
         bar = done_str + not_done_str + self.post_bar_spacing
         _suffix = ""
         if self.show_progress:
-            prgrs = str(round(self.progress, self.precision)).rjust(len(str(self.total)))
+            prgrs = (
+                round_relative_to_decimal(prgrs, self.progress_precision)
+                if self.progress_precision != 0
+                else prgrs
+            )
+            prgrs = str(prgrs).rjust(len(str(self.total)))
             _suffix += (
                 Fore.rgb(*self.progress_color)
-                + f"{prgrs} / {self.total}".rjust(2*len(str(self.total))+2)
+                + f"{prgrs} / {self.total}".rjust(2 * len(str(self.total)) + 2)
                 + self.spacing
-            )        
+            )
         if self.show_percentage:
             _suffix += (
                 Fore.rgb(*self.percentage_color)
@@ -242,7 +258,9 @@ class ProgressBar:
                 time(),
                 include_milliseconds=self.timer_with_millisec,
             )
-            _suffix += Fore.rgb(*self.timer_color) + self.timer_prefix + timer + self.spacing
+            _suffix += (
+                Fore.rgb(*self.timer_color) + self.timer_prefix + timer + self.spacing
+            )
         if self.show_delta_timer:
             if not self.last_updated:
                 self.last_updated = time()
@@ -290,7 +308,7 @@ class ProgressBar:
             if sub_name == name and sub_progress.ratio == 1:
                 sub_progress.finished = True
                 sub_progress.starting_time = None
-            if sub_bar != "": 
+            if sub_bar != "":
                 output += "\n" + sub_bar
 
         self.lines = len(output.splitlines())
@@ -397,8 +415,10 @@ class ProgressBar:
         else:
             self.update(0)
 
+
 if __name__ == "__main__":
     from random import randrange
+
     total = randrange(5, 10)
     total2 = randrange(5, 10)
     progress = ProgressBar(
@@ -420,7 +440,7 @@ if __name__ == "__main__":
         sleep(randrange(10) / 10)
         for j in range(total2):
             sleep(randrange(10) / 10)
-            p2.suffix = str(j+1) + " done"
+            p2.suffix = str(j + 1) + " done"
             progress.update(1, 2)
-        progress.suffix = str(i+1) + " done"
+        progress.suffix = str(i + 1) + " done"
         progress.update(1)

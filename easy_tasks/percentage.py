@@ -236,7 +236,7 @@ class ProgressBar:
             prgrs = (
                 round_relative_to_decimal(prgrs, self.progress_precision)
                 if self.progress_precision != 0
-                else prgrs
+                else progress
             )
             prgrs = str(prgrs).rjust(len(str(self.total)))
             _suffix += (

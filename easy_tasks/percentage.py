@@ -234,7 +234,7 @@ class ProgressBar:
         _suffix = ""
         if self.show_progress:
             prgrs = (
-                round_relative_to_decimal(prgrs, self.progress_precision)
+                round_relative_to_decimal(progress, self.progress_precision)
                 if self.progress_precision != 0
                 else progress
             )

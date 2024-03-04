@@ -123,6 +123,7 @@ def move_file(
     else:
         copy_function(filepath, nfp)
         os.remove(filepath)
+        return nfp
 
 
 def copy_file(
@@ -150,6 +151,7 @@ def copy_file(
         counter += 1
     nfp = os.path.join(targetpath, filename)
     copy_function(filepath, nfp)
+    return nfp
 
 
 def move_and_integrate_directory(

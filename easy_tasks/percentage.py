@@ -289,6 +289,10 @@ class ProgressBar:
         return main_bar
 
     def update(self, amount=1, name=None):
+        if self._parent_progress:
+            myname = [n for n, p in self._parent_progress.subprogresses.items() if p == self][0]
+            self._parent_progress.update(amount, myname)
+            return
         if amount:
             self.last_updated = time()
         else:

@@ -97,6 +97,7 @@ def move_file(
     targetpath: str,
     use_shutil_move: bool = True,
     copy_function: callable = shutil.copyfile,
+    new_name: str = None,
 ):
     """Move the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
@@ -113,10 +114,13 @@ def move_file(
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
-    counter = 2
-    while filename in content:
-        filename = fn + f" {counter}" + fe
-        counter += 1
+    if new_name:
+        filename = new_name + fe
+    else:
+        counter = 2
+        while filename in content:
+            filename = fn + f" {counter}" + fe
+            counter += 1
     nfp = os.path.join(targetpath, filename)
     if use_shutil_move: 
         shutil.move(filepath, nfp, shutil.copyfile)
@@ -130,6 +134,7 @@ def copy_file(
     filepath: str,
     targetpath: str,
     copy_function: callable = shutil.copyfile,
+    new_name: str = None,
 ):
     """Copy the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
@@ -145,10 +150,13 @@ def copy_file(
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
-    counter = 2
-    while filename in content:
-        filename = fn + f" {counter}" + fe
-        counter += 1
+    if new_name:
+        filename = new_name + fe
+    else:
+        counter = 2
+        while filename in content:
+            filename = fn + f" {counter}" + fe
+            counter += 1
     nfp = os.path.join(targetpath, filename)
     copy_function(filepath, nfp)
     return nfp

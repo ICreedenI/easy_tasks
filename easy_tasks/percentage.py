@@ -310,6 +310,7 @@ class ProgressBar:
                 sub_progress.finished = False
             sub_bar = sub_progress.get_progress_str()
             if sub_name == name and sub_progress.ratio == 1:
+                sub_progress.progress = 0
                 sub_progress.finished = True
                 sub_progress.starting_time = None
             if sub_bar != "":

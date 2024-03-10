@@ -310,7 +310,6 @@ class ProgressBar:
                 sub_progress.finished = False
             sub_bar = sub_progress.get_progress_str()
             if sub_name == name and sub_progress.ratio == 1:
-                sub_progress.progress = 0
                 sub_progress.finished = True
                 sub_progress.starting_time = None
             if sub_bar != "":
@@ -419,6 +418,13 @@ class ProgressBar:
             self._parent_progress.update(0)
         else:
             self.update(0)
+
+    def reset(self, total=None, prefix=None, suffix=None):
+        "set progress to 0 and set new total, prefix and suffix"
+        self.progress = 0
+        if total: self.total = total
+        if prefix: self.prefix = prefix
+        if suffix: self.suffix = suffix
 
 
 if __name__ == "__main__":

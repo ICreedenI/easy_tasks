@@ -108,6 +108,7 @@ SHOW_PROGRESS = True
 PROGRESS_COLOR = (255, 234, 0)
 SHOW_PERCENTAGE = True
 PERCENTAGE_COLOR = (255, 180, 0)
+PERCENTAGE_PRECISION = 0.2
 SHOW_TIMER = True
 TIMER_COLOR = (247, 127, 0)
 TIMER_PREFIX = ""
@@ -146,6 +147,7 @@ class ProgressBar:
         progress_color: tuple = PROGRESS_COLOR,
         show_percentage: bool = SHOW_PERCENTAGE,
         percentage_color: tuple = PERCENTAGE_COLOR,
+        percentage_precision: float = PERCENTAGE_PRECISION,
         show_timer: bool = SHOW_TIMER,
         timer_color: tuple = TIMER_COLOR,
         timer_prefix: str = TIMER_PREFIX,
@@ -178,6 +180,7 @@ class ProgressBar:
         self.progress_color = progress_color
         self.show_percentage = show_percentage
         self.percentage_color = percentage_color
+        self.percentage_precision = percentage_precision
         self.show_timer = show_timer
         self.timer_color = timer_color
         self.timer_prefix = timer_prefix
@@ -245,9 +248,12 @@ class ProgressBar:
                 + self.spacing
             )
         if self.show_percentage:
+            percentage = round_relative_to_decimal(self.ratio*100, self.percentage_precision) if self.percentage_precision != 0 else int(round(self.ratio*100, self.percentage_precision))
+            max_perc = round_relative_to_decimal(100, self.percentage_precision) if self.percentage_precision != 0 else str(int(round(100, self.percentage_precision)))
+            perc_len = len(max_perc)
             _suffix += (
                 Fore.rgb(*self.percentage_color)
-                + f"{round_relative_to_decimal(self.ratio*100, 2)} %".rjust(7)
+                + f"{percentage} %".rjust(perc_len)
                 + self.spacing
             )
         if self.show_timer:
@@ -351,6 +357,7 @@ class ProgressBar:
         progress_color: tuple = PROGRESS_COLOR,
         show_percentage: bool = SHOW_PERCENTAGE,
         percentage_color: tuple = PERCENTAGE_COLOR,
+        percentage_precision: float = PERCENTAGE_PRECISION,
         show_timer: bool = SHOW_TIMER,
         timer_color: tuple = TIMER_COLOR,
         timer_prefix: str = TIMER_PREFIX,
@@ -379,6 +386,7 @@ class ProgressBar:
             progress_color=progress_color,
             show_percentage=show_percentage,
             percentage_color=percentage_color,
+            percentage_precision=percentage_precision,
             show_timer=show_timer,
             timer_color=timer_color,
             timer_prefix=timer_prefix,

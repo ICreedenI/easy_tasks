@@ -98,24 +98,31 @@ def move_file(
     use_shutil_move: bool = True,
     copy_function: callable = shutil.copyfile,
     new_name: str = None,
+    skip_if_exists: bool = False,
+    add_missing_extension: bool = True,
 ):
     """Move the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
     Args:
-        filepath (str): file to move
-        targetpath (str): target directory
+        filepath (str): File to move.
+        targetpath (str): Target directory.
         use_shutil_move (bool): since shutil.move gave me trouble ... -> will use copy_function and os.remove
         copy_function (callable): used in shutil.moved or separately with os.remove
+        new_name (str): Set the new filename with extension
+        skip_if_exists (str): If the file already exists then None will be returned.
+        add_missing_extension (bool): If your new_name doesn't contain a "." It will add the extension of the original file. Defaults to True.
     """
-    if os.path.isfile(targetpath):
-        targetpath = os.path.dirname(targetpath)
+    if os.path.isfile(os.path.join(targetpath, os.path.basename(filepath))) and skip_if_exists:
+        return
     if not os.path.isdir(targetpath):
         os.makedirs(targetpath)
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
+    if add_missing_extension and "." not in new_name:
+        new_name += fe
     if new_name:
-        filename = new_name + fe
+        filename = new_name
     else:
         counter = 2
         while filename in content:
@@ -135,23 +142,30 @@ def copy_file(
     targetpath: str,
     copy_function: callable = shutil.copyfile,
     new_name: str = None,
+    skip_if_exists: bool = False,
+    add_missing_extension: bool = True,
 ):
     """Copy the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
     Args:
-        filepath (str): file to move
-        targetpath (str): target directory
+        filepath (str): File to move.
+        targetpath (str): Target directory.
         copy_function (callable): shutil copy function
+        new_name (str): Set the new filename with extension
+        skip_if_exists (str): If the file already exists then None will be returned.
+        add_missing_extension (bool): If your new_name doesn't contain a "." It will add the extension of the original file. Defaults to True.
     """
-    if os.path.isfile(targetpath):
-        targetpath = os.path.dirname(targetpath)
+    if os.path.isfile(os.path.join(targetpath, os.path.basename(filepath))) and skip_if_exists:
+        return
     if not os.path.isdir(targetpath):
         os.makedirs(targetpath)
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
     if new_name:
-        filename = new_name + fe
+        if add_missing_extension and "." not in new_name:
+            new_name += fe
+        filename = new_name
     else:
         counter = 2
         while filename in content:

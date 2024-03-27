@@ -119,9 +119,9 @@ def move_file(
     content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
-    if add_missing_extension and "." not in new_name:
-        new_name += fe
     if new_name:
+        if add_missing_extension and "." not in new_name:
+            new_name += fe
         filename = new_name
     else:
         counter = 2

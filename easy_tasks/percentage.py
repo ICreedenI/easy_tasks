@@ -103,12 +103,12 @@ def main_and_sub_progress_printer(
 
 PREFIX_COLOR = (127, 184, 0)
 SUFFIX = ""
-SUFFIX_COLOR = (12, 99, 231)
+# SUFFIX_COLOR = (12, 99, 231)
+SUFFIX_COLOR = (50, 150, 255)
 SHOW_PROGRESS = True
 PROGRESS_COLOR = (255, 234, 0)
 SHOW_PERCENTAGE = True
 PERCENTAGE_COLOR = (255, 180, 0)
-PERCENTAGE_PRECISION = 2
 SHOW_TIMER = True
 TIMER_COLOR = (247, 127, 0)
 TIMER_PREFIX = ""
@@ -126,6 +126,9 @@ INDENTATION_BLOCK = "    "
 PRECISION = 5
 SPACING = "  "
 POST_BAR_SPACING = "  "
+SHOW_ESTIMATED_REMAINING_TIME = True
+SHOW_ESTIMATED_REMAINING_TIME_COLOR = (220, 50, 170)
+SHOW_ESTIMATED_REMAINING_TIME_PREFIX = "Remaining time: ~ "
 
 
 class ProgressBar:
@@ -147,7 +150,6 @@ class ProgressBar:
         progress_color: tuple = PROGRESS_COLOR,
         show_percentage: bool = SHOW_PERCENTAGE,
         percentage_color: tuple = PERCENTAGE_COLOR,
-        percentage_precision: float = PERCENTAGE_PRECISION,
         show_timer: bool = SHOW_TIMER,
         timer_color: tuple = TIMER_COLOR,
         timer_prefix: str = TIMER_PREFIX,
@@ -169,6 +171,9 @@ class ProgressBar:
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
         _parent_progress=None,
+        show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
+        show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
+        show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
     ) -> None:
         self.progress = 0
         self.total = total
@@ -180,7 +185,6 @@ class ProgressBar:
         self.progress_color = progress_color
         self.show_percentage = show_percentage
         self.percentage_color = percentage_color
-        self.percentage_precision = percentage_precision
         self.show_timer = show_timer
         self.timer_color = timer_color
         self.timer_prefix = timer_prefix
@@ -209,6 +213,10 @@ class ProgressBar:
         self.starting_time = None
         self.last_updated = None
         self.progress_precision = 0
+        self.delta_timer_history = []
+        self.show_estimated_remaining_time = show_estimated_remaining_time
+        self.show_estimated_remaining_time_color = show_estimated_remaining_time_color
+        self.show_estimated_remaining_time_prefix = show_estimated_remaining_time_prefix
 
         if auto_start:
             self.update(0)
@@ -248,12 +256,9 @@ class ProgressBar:
                 + self.spacing
             )
         if self.show_percentage:
-            percentage = round_relative_to_decimal(self.ratio*100, self.percentage_precision) if self.percentage_precision != 0 else int(round(self.ratio*100, self.percentage_precision))
-            max_perc = round_relative_to_decimal(100, self.percentage_precision) if self.percentage_precision != 0 else str(int(round(100, self.percentage_precision)))
-            perc_len = len(max_perc)
             _suffix += (
                 Fore.rgb(*self.percentage_color)
-                + f"{percentage} %".rjust(perc_len)
+                + f"{round_relative_to_decimal(self.ratio*100, 2)} %".rjust(7)
                 + self.spacing
             )
         if self.show_timer:
@@ -267,9 +272,9 @@ class ProgressBar:
             _suffix += (
                 Fore.rgb(*self.timer_color) + self.timer_prefix + timer + self.spacing
             )
+        if not self.last_updated:
+            self.last_updated = time()
         if self.show_delta_timer:
-            if not self.last_updated:
-                self.last_updated = time()
             delta_timer = know_the_time.get_time_delta_prettystring(
                 self.last_updated,
                 time(),
@@ -281,6 +286,22 @@ class ProgressBar:
                 + delta_timer
                 + self.spacing
             )
+        if self.show_estimated_remaining_time:
+            if len(self.delta_timer_history) > 0:
+                remaining_time = (self.total-self.progress) * sum(self.delta_timer_history)/len(self.delta_timer_history)
+                remaining_time = know_the_time.get_time_delta_prettystring(
+                    remaining_time,
+                    start_is_delta=True,
+                    include_milliseconds=self.timer_with_millisec,
+                )
+            else:
+                remaining_time = "--:--:--:---" if self.timer_with_millisec else "--:--:--"
+            _suffix += (
+                Fore.rgb(*self.show_estimated_remaining_time_color)
+                + self.show_estimated_remaining_time_prefix
+                + remaining_time
+                + self.spacing
+            )            
         _suffix += Fore.rgb(*self.suffix_color) + self.suffix
         main_bar = (
             self.indentation * self.indentation_block
@@ -300,6 +321,7 @@ class ProgressBar:
             self._parent_progress.update(amount, myname)
             return
         if amount:
+            self.delta_timer_history.append(time()-self.last_updated)
             self.last_updated = time()
         else:
             amount = 0
@@ -357,7 +379,6 @@ class ProgressBar:
         progress_color: tuple = PROGRESS_COLOR,
         show_percentage: bool = SHOW_PERCENTAGE,
         percentage_color: tuple = PERCENTAGE_COLOR,
-        percentage_precision: float = PERCENTAGE_PRECISION,
         show_timer: bool = SHOW_TIMER,
         timer_color: tuple = TIMER_COLOR,
         timer_prefix: str = TIMER_PREFIX,
@@ -370,11 +391,14 @@ class ProgressBar:
         bar_color: tuple = BAR_COLOR,
         background_color: tuple = BACKGROUND_COLOR,
         vanish_with_finish: bool = VANISH_WITH_FINISH,
-        indentation: int = INDENTATION,
+        indentation: int = 1,
         indentation_block: str = INDENTATION_BLOCK,
         precision: int = PRECISION,
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
+        show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
+        show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
+        show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
     ):
         progress = ProgressBar(
             total=total,
@@ -386,7 +410,6 @@ class ProgressBar:
             progress_color=progress_color,
             show_percentage=show_percentage,
             percentage_color=percentage_color,
-            percentage_precision=percentage_precision,
             show_timer=show_timer,
             timer_color=timer_color,
             timer_prefix=timer_prefix,
@@ -408,6 +431,9 @@ class ProgressBar:
             spacing=spacing,
             post_bar_spacing=post_bar_spacing,
             _parent_progress=self,
+            show_estimated_remaining_time=show_estimated_remaining_time,
+            show_estimated_remaining_time_color=show_estimated_remaining_time_color,
+            show_estimated_remaining_time_prefix=show_estimated_remaining_time_prefix,
         )
         self.subprogresses[name] = progress
         return progress

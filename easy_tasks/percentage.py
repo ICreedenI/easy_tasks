@@ -6,7 +6,8 @@ import know_the_time
 from colorful_terminal import Fore, TermAct, colored_print
 from exception_details import print_exception_details
 
-from .rounding import round_relative_to_decimal
+# from .rounding import round_relative_to_decimal
+from easy_tasks.rounding import round_relative_to_decimal
 
 
 def get_percentage_as_fitted_string(
@@ -131,6 +132,7 @@ SHOW_ESTIMATED_REMAINING_TIME_COLOR = (220, 50, 170)
 SHOW_ESTIMATED_REMAINING_TIME_PREFIX = "Remaining time: ~ "
 
 
+
 class ProgressBar:
     """A progress bar printer with subprogress support and many customization options.
 
@@ -171,9 +173,9 @@ class ProgressBar:
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
         _parent_progress=None,
-        show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
-        show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
-        show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
+        # show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
+        # show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
+        # show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
     ) -> None:
         self.progress = 0
         self.total = total
@@ -214,9 +216,10 @@ class ProgressBar:
         self.last_updated = None
         self.progress_precision = 0
         self.delta_timer_history = []
-        self.show_estimated_remaining_time = show_estimated_remaining_time
-        self.show_estimated_remaining_time_color = show_estimated_remaining_time_color
-        self.show_estimated_remaining_time_prefix = show_estimated_remaining_time_prefix
+        self.show_estimated_remaining_time = False  # show_estimated_remaining_time
+        self.show_estimated_remaining_time_color = SHOW_ESTIMATED_REMAINING_TIME_COLOR  # show_estimated_remaining_time_color
+        self.show_estimated_remaining_time_prefix = SHOW_ESTIMATED_REMAINING_TIME_PREFIX  # show_estimated_remaining_time_prefix
+        self.remaining_time = "--:--:--:---" if self.timer_with_millisec else "--:--:--"
 
         if auto_start:
             self.update(0)
@@ -287,8 +290,10 @@ class ProgressBar:
                 + self.spacing
             )
         if self.show_estimated_remaining_time:
-            if len(self.delta_timer_history) > 0:
-                remaining_time = (self.total-self.progress) * sum(self.delta_timer_history)/len(self.delta_timer_history)
+            if self.ratio != 0: 
+                remaining_time = math.floor((self.last_updated - self.starting_time) / self.ratio) - (time() - self.last_updated)
+                if remaining_time >= 0: self.remaining_time = remaining_time
+                else: remaining_time = self.remaining_time
                 remaining_time = know_the_time.get_time_delta_prettystring(
                     remaining_time,
                     start_is_delta=True,
@@ -322,7 +327,10 @@ class ProgressBar:
             return
         if amount:
             self.delta_timer_history.append(time()-self.last_updated)
-            self.last_updated = time()
+            if name:
+                self.subprogresses[name].last_updated = time()
+            else:
+                self.last_updated = time()
         else:
             amount = 0
         if not name:
@@ -340,6 +348,7 @@ class ProgressBar:
             if sub_name == name and sub_progress.ratio == 1:
                 sub_progress.finished = True
                 sub_progress.starting_time = None
+                sub_progress.last_updated = None
             if sub_bar != "":
                 output += "\n" + sub_bar
 
@@ -396,9 +405,9 @@ class ProgressBar:
         precision: int = PRECISION,
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
-        show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
-        show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
-        show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
+        # show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
+        # show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
+        # show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
     ):
         progress = ProgressBar(
             total=total,
@@ -431,9 +440,9 @@ class ProgressBar:
             spacing=spacing,
             post_bar_spacing=post_bar_spacing,
             _parent_progress=self,
-            show_estimated_remaining_time=show_estimated_remaining_time,
-            show_estimated_remaining_time_color=show_estimated_remaining_time_color,
-            show_estimated_remaining_time_prefix=show_estimated_remaining_time_prefix,
+            # show_estimated_remaining_time=show_estimated_remaining_time,
+            # show_estimated_remaining_time_color=show_estimated_remaining_time_color,
+            # show_estimated_remaining_time_prefix=show_estimated_remaining_time_prefix,
         )
         self.subprogresses[name] = progress
         return progress
@@ -470,14 +479,14 @@ if __name__ == "__main__":
         total,
         suffix="0 done",
         vanish_with_finish=False,
-        timer_with_millisec=True,  # , constant_output=True
+        timer_with_millisec=False,  # , constant_output=True
     )
     p2 = progress.add_subprogress(
         2,
         total,
         prefix="Subpprogress: ",
         suffix="0 done",
-        timer_with_millisec=True,
+        timer_with_millisec=False,
         indentation=1,
     )
 
@@ -486,6 +495,9 @@ if __name__ == "__main__":
         for j in range(total2):
             sleep(randrange(10) / 10)
             p2.suffix = str(j + 1) + " done"
-            progress.update(1, 2)
+            p2.update(1)
+            # print("progress.starting_time", progress.starting_time)
+            # print("p2.starting_time", p2.starting_time)
+            # print()
         progress.suffix = str(i + 1) + " done"
         progress.update(1)

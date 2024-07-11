@@ -100,6 +100,7 @@ def move_file(
     new_name: str = None,
     skip_if_exists: bool = False,
     add_missing_extension: bool = True,
+    overwrite_existing: bool = False,
 ):
     """Move the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
@@ -116,9 +117,12 @@ def move_file(
         return
     if not os.path.isdir(targetpath):
         os.makedirs(targetpath)
-    content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
+    fp = os.path.join(targetpath, filename)
+    if overwrite_existing and os.path.isfile(fp):
+        delete_path(fp)
+    content = os.listdir(targetpath)
     if new_name:
         if add_missing_extension and "." not in new_name:
             new_name += fe
@@ -134,7 +138,7 @@ def move_file(
     else:
         copy_function(filepath, nfp)
         os.remove(filepath)
-        return nfp
+    return nfp
 
 
 def copy_file(
@@ -144,6 +148,7 @@ def copy_file(
     new_name: str = None,
     skip_if_exists: bool = False,
     add_missing_extension: bool = True,
+    overwrite_existing: bool = False,
 ):
     """Copy the file into the target directory. Renames the file by adding ' (counter)' just before the file extension if the filename allready exists.
 
@@ -159,9 +164,12 @@ def copy_file(
         return
     if not os.path.isdir(targetpath):
         os.makedirs(targetpath)
-    content = os.listdir(targetpath)
     filename = os.path.basename(filepath)
     fn, fe = os.path.splitext(filename)
+    fp = os.path.join(targetpath, filename)
+    if overwrite_existing and os.path.isfile(fp):
+        delete_path(fp)
+    content = os.listdir(targetpath)
     if new_name:
         if add_missing_extension and "." not in new_name:
             new_name += fe

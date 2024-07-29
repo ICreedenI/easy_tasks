@@ -38,6 +38,7 @@ To not get annoyed by simple recurring tasks I created this small library.
   - with_percentage_symbol: boolean, adds ' %' if True
 
 - `progress_printer`  
+  Better use ProgressBar instead
   Call this funciton in a loop with index+1 as count to monitor your progress.  
   Will automatically switch to a new line when 100 % is reached.
   Remember to call print once if you break since the cursor will not move to the next line till 100 % are reached.
@@ -54,6 +55,9 @@ To not get annoyed by simple recurring tasks I created this small library.
 - `unpack_list`  
   Dissolve inner lists and tuples of nested list and tuples.
 
+- `ProgressBar`
+  Create progress bar with poossible subprogresses, exception handling, early termination handling, early completion handling and many options for customization.
+  Simply use as `with ProgressBar(total) as prg:` and look at the class parameters and methods.
 
 ## Links
 [GitHub](https://github.com/ICreedenI/easy_tasks) | [PyPI](https://pypi.org/project/easy-tasks/)

@@ -695,7 +695,7 @@ class ProgressBar:
                 self.last_updated = time()
         else:
             amount = 0
-        if not _subprocess_index:
+        if _subprocess_index == None:
             self.progress += amount
         output = self.get_progress_str()
 
@@ -852,59 +852,21 @@ class ProgressBar:
         if suffix: self.suffix = suffix
 
 
-def showcase_behavior_on_exceptions():
-    # On exceptions
-    total = 100
+
+def showcase_behavior_on_normal():
+    # On nomrl completion
+    total = 5
     _break = False
     with ProgressBar(total) as prg:
-        prg2 = prg.add_subprogress(100)
-        prg3 = prg.add_subprogress(100, indentation=2)
-        for i in range(100):
-            prg2.reset(100)
-            for j in range(100):
-                prg3.reset(100)
-                sleep(0.001)
-                for k in range(10):
-                    sleep(0.001)
-                    prg3.update()
-                    if i == 0 and j == 0 and k == 5:
-                        _break = True
-                        break
-                if _break:
-                    break
+        prg2 = prg.add_subprogress(total)
+        for i in range(total):
+            prg2.reset(total)
+            for j in range(total):
+                sleep(0.2)
                 prg2.update()
-            if _break:
-                break
             prg.update()
-        raise Exception
-
-
-def showcase_behavior_on_early_exits():
-    # On early exits
-    total = 100
-    _break = False
-    with ProgressBar(total) as prg:
-        prg2 = prg.add_subprogress(100)
-        prg3 = prg.add_subprogress(100, indentation=2)
-        for i in range(100):
-            prg2.reset(100)
-            for j in range(100):
-                prg3.reset(100)
-                sleep(0.001)
-                for k in range(10):
-                    sleep(0.001)
-                    prg3.update()
-                    if i == 0 and j == 1 and k == 5:
-                        _break = True
-                        break
-                if _break:
-                    break
-                prg2.update()
-            if _break:
-                break
-            prg.update()
+        prg.completed()
     print("test finished")
-
 
 def showcase_behavior_on_early_completion():
     # On early completion
@@ -932,6 +894,58 @@ def showcase_behavior_on_early_completion():
             prg.update()
         prg.completed()
     print("test finished")
+
+def showcase_behavior_on_early_exits():
+    # On early exits
+    total = 100
+    _break = False
+    with ProgressBar(total) as prg:
+        prg2 = prg.add_subprogress(100)
+        prg3 = prg.add_subprogress(100, indentation=2)
+        for i in range(100):
+            prg2.reset(100)
+            for j in range(100):
+                prg3.reset(100)
+                sleep(0.001)
+                for k in range(10):
+                    sleep(0.001)
+                    prg3.update()
+                    if i == 0 and j == 1 and k == 5:
+                        _break = True
+                        break
+                if _break:
+                    break
+                prg2.update()
+            if _break:
+                break
+            prg.update()
+    print("test finished")
+
+def showcase_behavior_on_exceptions():
+    # On exceptions
+    total = 100
+    _break = False
+    with ProgressBar(total) as prg:
+        prg2 = prg.add_subprogress(100)
+        prg3 = prg.add_subprogress(100, indentation=2)
+        for i in range(100):
+            prg2.reset(100)
+            for j in range(100):
+                prg3.reset(100)
+                sleep(0.001)
+                for k in range(10):
+                    sleep(0.001)
+                    prg3.update()
+                    if i == 0 and j == 0 and k == 5:
+                        _break = True
+                        break
+                if _break:
+                    break
+                prg2.update()
+            if _break:
+                break
+            prg.update()
+        raise Exception
 
 
 

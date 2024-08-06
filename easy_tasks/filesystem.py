@@ -389,7 +389,7 @@ def get_file_size(
 def copied_paths_to_list():
     "path copied in Windows to a list"
     urls = paste().replace("\r", "").split("\n")
-    urls = [u[1:-1] for u in urls]
+    urls = [u.strip('"') for u in urls]
     return urls
 
 

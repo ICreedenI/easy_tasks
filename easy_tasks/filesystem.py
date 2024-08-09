@@ -226,6 +226,46 @@ def move_and_integrate_directory(
     return fails
 
 
+def copy_and_integrate_directory(
+    dirpath: str,
+    targetpath: str,
+):
+    """Copy the content of the directory (dirpath) to the target path. 
+    Retains the original files and directories at dirpath.
+
+    Args:
+        dirpath (str): source
+        targetpath (str): target / destination
+
+    Returns:
+        list[str]: paths that couldn't be copied
+    """
+    folderpath = os.path.normpath(dirpath)
+    fails = []
+
+    def try_copy(fp: str):
+        rel_path = os.path.relpath(fp, folderpath)
+        structure = rel_path.split("\\")
+        try:
+            if not os.path.isdir(fp):
+                npdp = os.path.join(targetpath, *structure[: len(structure) - 1])
+                if not os.path.isdir(npdp):
+                    os.makedirs(npdp)
+            shutil.copy2(fp, os.path.join(targetpath, rel_path))
+        except:
+            if os.path.isdir(fp):
+                for n in os.listdir(fp):
+                    try_copy(os.path.join(fp, n))
+            else:
+                fails.append(fp)
+
+    for f in os.listdir(folderpath):
+        fp = os.path.join(folderpath, f)
+        try_copy(fp)
+        
+    return fails
+
+
 def get_all_subdir_sizes(
     dirpath: str,
     unit: str = "GB",

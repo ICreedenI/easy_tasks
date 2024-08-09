@@ -37,6 +37,7 @@ from .filesystem import (
     move_file,
     copy_file,
     move_and_integrate_directory,
+    copy_and_integrate_directory,
     get_all_subdir_sizes,
     get_directory_size,
     get_file_size,
@@ -49,4 +50,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.42"
+__version__ = "0.0.43"

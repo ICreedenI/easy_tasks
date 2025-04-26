@@ -3,6 +3,7 @@ from .closest_furthest_value import (
     closest_value_in_list,
     furthest_value_in_dict,
     closest_value_in_dict,
+    get_first_from_list,
 )
 from .dublicates import find_dublicates, remove_dublicates
 from .percentage import (
@@ -15,6 +16,8 @@ from .sorter import sorted_dict
 from .string_transformation import (
     upper_case_first_letter_of_word,
     upper_case_first_letter_of_words,
+    insert_into_string,
+    insert_into_file,
 )
 from .unpack import unpack_list
 from .list_printer import pretty_print_list, pretty_print_nested_list
@@ -50,4 +53,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.44"
+__version__ = "0.0.45"

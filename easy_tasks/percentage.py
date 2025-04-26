@@ -766,9 +766,6 @@ class ProgressBar:
         precision: int = PRECISION,
         spacing: str = SPACING,
         post_bar_spacing: str = POST_BAR_SPACING,
-        # show_estimated_remaining_time: bool = SHOW_ESTIMATED_REMAINING_TIME,
-        # show_estimated_remaining_time_color: tuple = SHOW_ESTIMATED_REMAINING_TIME_COLOR,
-        # show_estimated_remaining_time_prefix: str = SHOW_ESTIMATED_REMAINING_TIME_PREFIX,
     ):
         progress = ProgressBar(
             total=total,
@@ -808,8 +805,21 @@ class ProgressBar:
         self.subprogresses.append(progress)
         return progress
 
+    def remove_subprogress(self, subprogress):
+        length = len(self.subprogresses)
+        self.subprogresses.remove(subprogress)
+        constant_output = self.constant_output
+        self.constant_output = False
+        TermAct.clear_current_line_action()
+        for i in range(length):
+            print()
+            TermAct.clear_current_line_action()
+        for i in range(length):
+            TermAct.clear_previous_line_action()
+        self.constant_output = constant_output
+
     def _constant_output(self):
-        while not self.finished and not self._stop_output:
+        while not self.finished and not self._stop_output and self.constant_output:
             self.update(None)
             sleep(self.constant_output_rate)
 
@@ -820,6 +830,9 @@ class ProgressBar:
             print("\n"*lines)
 
     def completed(self):
+        self.finish()
+
+    def finish(self):
         for child in self.subprogresses:
             child.progress = child.total 
         self.progress = self.total

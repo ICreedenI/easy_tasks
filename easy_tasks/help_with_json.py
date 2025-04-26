@@ -32,7 +32,7 @@ def strip_json_comments(string: str):
     return cleaned_json_str
 
 
-def get_from_json(file_path):
+def get_from_json(file_path) -> dict:
     with open(file_path, 'r') as file:
         data = file.read()
     

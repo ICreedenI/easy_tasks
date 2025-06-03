@@ -20,7 +20,7 @@ from .string_transformation import (
     insert_into_file,
 )
 from .unpack import unpack_list
-from .list_printer import pretty_print_list, pretty_print_nested_list
+from .list_printer import pretty_print_list, pretty_print_nested_list, get_var_names
 
 from .help_with_pickle import pickle_pack, pickle_unpack
 from .help_with_json import dump_as_json, get_from_json
@@ -53,4 +53,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.45"
+__version__ = "0.0.46"

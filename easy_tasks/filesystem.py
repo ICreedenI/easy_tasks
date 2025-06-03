@@ -133,7 +133,7 @@ def move_file(
             filename = fn + f" {counter}" + fe
             counter += 1
     nfp = os.path.join(targetpath, filename)
-    if use_shutil_move: 
+    if use_shutil_move:
         shutil.move(filepath, nfp, shutil.copyfile)
     else:
         copy_function(filepath, nfp)
@@ -230,7 +230,7 @@ def copy_and_integrate_directory(
     dirpath: str,
     targetpath: str,
 ):
-    """Copy the content of the directory (dirpath) to the target path. 
+    """Copy the content of the directory (dirpath) to the target path.
     Retains the original files and directories at dirpath.
 
     Args:
@@ -262,7 +262,7 @@ def copy_and_integrate_directory(
     for f in os.listdir(folderpath):
         fp = os.path.join(folderpath, f)
         try_copy(fp)
-        
+
     return fails
 
 
@@ -293,54 +293,59 @@ def get_all_subdir_sizes(
     Returns:
         dict[str, str]: Dictionary with the file names (keys) and the size as a string with the unit (possibly with the percentage)
     """
+    if print_it:
+        varp(maindir)
     if unit == "B":
         u = 1
     elif unit == "MB":
         u = 10**6
     elif unit == "GB":
         u = 10**9
-    elif type(unit) == int or type(unit) == float:
-        u = unit
     else:
         raise ValueError("unit not recognized")
-    mp = dirpath
+    mp = maindir
     summe = 0
     max_nachkomma = 0
     subdir_to_size = {}
-    max_size = sum([os.path.getsize(os.path.join(mp, f)) for f in os.listdir(mp)]) / u
-    pres = len(str(max_size).split(".")[0])
-    for d in os.listdir(mp):
-        dp = os.path.join(mp, d)
-        size = os.path.getsize(dp) / u
-        pras = len(str(size).split(".")[0])
-        extr = pres - pras
-        add_space = extr * " "
-        summe += size
-        size = round_relative_to_decimal(size, round_to).strip(".")
-        if as_string:
-            value = f"{add_space}{size} {unit}"
-        else:
-            value = size
-        subdir_to_size[d] = value
-        nachkomma = len(value.split(".")[-1])
-        if nachkomma > max_nachkomma:
-            max_nachkomma = nachkomma
+    with ProgressBar(len(os.listdir(mp)), "Getting directory sizes: ") as prg:
+        for d in os.listdir(mp):
+            try:
+                dp = os.path.join(mp, d)
+                size = get_file_size(dp) / u
+                if size / 100 > 1:
+                    add_space = 0 * " "
+                elif 1 > size / 100 > 0.1:
+                    add_space = 1 * " "
+                else:
+                    add_space = 2 * " "
+                summe += size
+                size = std_notation(size, round_to).strip(".")
+                value = f"{add_space}{size} {unit}"
+                subdir_to_size[d] = value
+                nachkomma = len(value.split(".")[-1])
+                if nachkomma > max_nachkomma:
+                    max_nachkomma = nachkomma
+            except:
+                pass
+            prg.update()
     if sort_for_size:
         subdir_to_size = {
             k: v for (k, v) in sorted(subdir_to_size.items(), key=lambda item: item[1])
         }
 
-    size = round_relative_to_decimal(summe, round_to).strip(".")
-    if with_sum:
-        if as_string:
-            subdir_to_size["<Sum>"] = f"{size} {unit}"
-        else:
-            subdir_to_size["<Sum>"] = size
+    if summe / 100 > 1:
+        add_space = 0 * " "
+    elif 1 > summe / 100 > 0.1:
+        add_space = 1 * " "
+    else:
+        add_space = 2 * " "
+    size = std_notation(summe, round_to).strip(".")
+    subdir_to_size["<Summe>"] = f"{add_space}{size} {unit}"
 
     if percentages:
         subdir_to_size_perc = {}
         for sd, size in subdir_to_size.items():
-            if sd != "<Sum>":
+            if sd != "<Summe>":
                 perc = get_percentage_as_fitted_string(
                     float(size.strip(" " + unit)), summe, 2
                 )
@@ -348,10 +353,7 @@ def get_all_subdir_sizes(
                 if nachkomma == len(size):
                     nachkomma = len(unit)
                 spc = max_nachkomma - nachkomma + 4
-                if as_string:
-                    subdir_to_size_perc[sd] = size + " " * spc + perc
-                else:
-                    subdir_to_size_perc[sd] = size, perc
+                subdir_to_size_perc[sd] = size + " " * spc + perc
             else:
                 subdir_to_size_perc[sd] = size
     if print_it:
@@ -645,4 +647,3 @@ def delete_path(path):
         shutil.rmtree(path)
     except:
         os.remove(path)
-

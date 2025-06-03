@@ -1,10 +1,90 @@
+import inspect
 from copy import deepcopy
-from varname import nameof
+from textwrap import dedent
+
+import executing
+
 from colorful_terminal import *
-from copy import deepcopy
 
 
-def get_string_as_fitted_table(data: list, padding: int = 2, min_width: int = None, alignment: str = "left"):
+class Source(executing.Source):
+    def get_text_with_indentation(self, node):
+        result = self.asttokens().get_text(node)
+        if "\n" in result:
+            result = " " * node.first_token.start[1] + result
+            result = dedent(result)
+        result = result.strip()
+        return result
+
+
+class NoSourceAvailableError(OSError):
+    """
+    Raised when finding or accessing source code that's required to
+    parse and analyze fails. This can happen, for example, when
+
+    - varp() is invoked inside a REPL or interactive shell, e.g. from the
+        command line (CLI) or with python -i.
+
+    - The source code is mangled and/or packaged, e.g. with a project
+        freezer like PyInstaller.
+
+    - The underlying source code changed during execution. See
+        https://stackoverflow.com/a/33175832.
+    """
+
+    infoMessage = (
+        "Failed to access the underlying source code for analysis. Was varp() "
+        "invoked in a REPL (e.g. from the command line), a frozen application "
+        "(e.g. packaged with PyInstaller), or did the underlying source code "
+        "change during execution?"
+    )
+
+
+def get_var_names(frame=2):
+    """
+    Returns variable names by execution frame. Frame = 2 gets you the input variable name of the arguments of your parent function.
+
+
+    Args:
+
+        • frame (int, optional) Defaults to 2.
+            currentframe of excecution frame. Must be 1 =< frame =< 3.
+
+
+    Raises:
+
+        • ValueError:
+            If not 1 <= frame <= 3.
+
+        • NoSourceAvailableError:
+            if callNode is None.
+
+
+    Returns:
+
+        list:
+            arg names.
+
+    """
+    if frame == 1:
+        callFrame = inspect.currentframe().f_back
+    elif frame == 2:
+        callFrame = inspect.currentframe().f_back.f_back
+    elif frame == 3:
+        callFrame = inspect.currentframe().f_back.f_back.f_back
+    else:
+        raise ValueError("max frame: 3")
+    callNode = Source.executing(callFrame).node
+    if callNode is None:
+        raise NoSourceAvailableError()
+    source = Source.for_frame(callFrame)
+    sanitizedArgStrs = [source.get_text_with_indentation(arg) for arg in callNode.args]
+    return sanitizedArgStrs
+
+
+def get_string_as_fitted_table(
+    data: list, padding: int = 2, min_width: int = None, alignment: str = "left"
+):
     """Generates a string representation of the given table.
 
     Args:
@@ -19,33 +99,33 @@ def get_string_as_fitted_table(data: list, padding: int = 2, min_width: int = No
     dataset = deepcopy(data)
     row_lengths = [len(row) for row in dataset]
     cols = max(row_lengths)
-    
+
     for row in dataset:
         while len(row) < cols:
             row.append("")
-    
+
     col_widths = []
     for i in range(cols):
         col = [row[i] for row in dataset]
         col_width = max(len(str(word)) for word in col) + padding  # padding
         col_widths.append(col_width)
-    
+
     s = ""
     for row in dataset:
         for index, word in enumerate(row):
             if min_width is not None and col_widths[index] < min_width:
                 col_widths[index] = min_width
-            
+
             if alignment == "left":
                 s += str(word).ljust(col_widths[index])
             elif alignment == "center":
                 s += str(word).center(col_widths[index])
             elif alignment == "right":
                 s += str(word).rjust(col_widths[index])
-                
+
         if row != dataset[-1]:
             s += "\n"
-    
+
     return s
 
 
@@ -79,7 +159,7 @@ def pretty_print_list(
         s_color = ""
     if print_list_name:
         try:
-            list_name = nameof(List, frame=2)
+            list_name = get_var_names(frame=2)[0]
         except:
             list_name = "<name of list not found>"
         name = n_color + list_name + reset + s_color + " = [\n" + reset
@@ -123,7 +203,7 @@ def pretty_print_nested_list(
         ValueError: If List is empty
     """
     try:
-        name = nameof(List, frame=2)
+        name = get_var_names(frame=2)[0]
     except:
         name = "<name of list not found>"
     if colored:

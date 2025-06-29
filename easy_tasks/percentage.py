@@ -290,7 +290,7 @@ class ProgressBarOld:
                 + self.spacing
             )
         if self.show_estimated_remaining_time:
-            if self.ratio != 0: 
+            if self.ratio != 0:
                 remaining_time = math.floor((self.last_updated - self.starting_time) / self.ratio) - (time() - self.last_updated)
                 if remaining_time >= 0: self.remaining_time = remaining_time
                 else: remaining_time = self.remaining_time
@@ -306,7 +306,7 @@ class ProgressBarOld:
                 + self.show_estimated_remaining_time_prefix
                 + remaining_time
                 + self.spacing
-            )            
+            )
         _suffix += Fore.rgb(*self.suffix_color) + self.suffix
         main_bar = (
             self.indentation * self.indentation_block
@@ -460,7 +460,7 @@ class ProgressBarOld:
 
     def completed(self):
         for child in self.subprogresses.values():
-            child.progress = child.total 
+            child.progress = child.total
         self.progress = self.total
         if self._parent_progress:
             self._parent_progress.update(0)
@@ -568,6 +568,7 @@ class ProgressBar:
         self.show_estimated_remaining_time_color = SHOW_ESTIMATED_REMAINING_TIME_COLOR  # show_estimated_remaining_time_color
         self.show_estimated_remaining_time_prefix = SHOW_ESTIMATED_REMAINING_TIME_PREFIX  # show_estimated_remaining_time_prefix
         self.remaining_time = "--:--:--:---" if self.timer_with_millisec else "--:--:--"
+        self._completed_called = False
 
         if auto_start:
             self.update(0)
@@ -586,7 +587,7 @@ class ProgressBar:
             if exc_type is not None:
                 # Returning False re-raises the exception
                 return False
-    
+
     def get_progress_str(self):
         self.ratio = (
             round(self.progress / self.total, self.precision)
@@ -651,7 +652,7 @@ class ProgressBar:
                 + self.spacing
             )
         if self.show_estimated_remaining_time:
-            if self.ratio != 0: 
+            if self.ratio != 0:
                 remaining_time = math.floor((self.last_updated - self.starting_time) / self.ratio) - (time() - self.last_updated)
                 if remaining_time >= 0: self.remaining_time = remaining_time
                 else: remaining_time = self.remaining_time
@@ -667,7 +668,7 @@ class ProgressBar:
                 + self.show_estimated_remaining_time_prefix
                 + remaining_time
                 + self.spacing
-            )            
+            )
         _suffix += Fore.rgb(*self.suffix_color) + self.suffix
         main_bar = (
             self.indentation * self.indentation_block
@@ -732,6 +733,7 @@ class ProgressBar:
         colored_print(TermAct.hide_cursor() + self.output, end="\r")
 
         if self.finished == True:
+            self._completed_called = True
             print(TermAct.show_cursor(), end="")
             print((self.lines - 1) * "\n")
 
@@ -833,21 +835,26 @@ class ProgressBar:
         self.finish()
 
     def finish(self):
+        if self._completed_called:
+            return
         for child in self.subprogresses:
-            child.progress = child.total 
-        self.progress = self.total
+            if child.progress != child.total:
+                child.progress = child.total
+
+        if self.progress != self.total:
+            self.progress = self.total
         if self._parent_progress:
             self._parent_progress.update(0)
         else:
             self.update(0)
-        
+
     def do_break(self):
         "will stop the output stream without raising the progress and sets self._broke and every child._broke to True so this function is only called once - reverse with self.unbreak()"
         for child in self.subprogresses:
-            if not child._broke: 
+            if not child._broke:
                 child.stop_output()
             child._broke = True
-        if not self._broke: 
+        if not self._broke:
             self.stop_output(True)
         self._broke = True
 
@@ -859,6 +866,7 @@ class ProgressBar:
 
     def reset(self, total=None, prefix=None, suffix=None):
         "set progress to 0 and set new total, prefix and suffix"
+        self._completed_called = False
         self.progress = 0
         if total: self.total = total
         if prefix: self.prefix = prefix

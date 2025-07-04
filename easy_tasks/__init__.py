@@ -18,6 +18,9 @@ from .string_transformation import (
     upper_case_first_letter_of_words,
     insert_into_string,
     insert_into_file,
+    replace_in_string,
+    replace_in_file,
+    comment_lines_in_file,
 )
 from .unpack import unpack_list
 from .list_printer import pretty_print_list, pretty_print_nested_list, get_var_names
@@ -53,4 +56,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.47"
+__version__ = "0.0.48"

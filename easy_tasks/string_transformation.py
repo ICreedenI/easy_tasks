@@ -434,7 +434,9 @@ def comment_lines_in_file(
 
 
 def comment_lines_by_lineno(
-    linenos: list,
+    linenos: list[int] = None,
+    from_lineno: int = None,
+    to_lineno: int = None,
     relative: bool = False,
     backup: bool = True,
     dry_run: bool = False,
@@ -442,34 +444,33 @@ def comment_lines_by_lineno(
     """
     Comments out specific lines in the source file of the calling script.
 
-    This function uses stack inspection to locate the source file and line number
-    of the code that called it, then comments out the specified lines in that file.
-    Each commented line will retain its original indentation, with a "# " inserted
-    after any leading whitespace.
+    Supports either a list of line numbers (`linenos`) or a contiguous range
+    via `from_lineno` and `to_lineno`. Each targeted line will be modified to
+    insert '# ' after its leading whitespace.
 
     Args:
-        linenos (list[int]): Line numbers to comment. These can be absolute or
-            relative to the calling line, depending on the `relative` flag.
-        relative (bool, optional): If True, `linenos` are interpreted as offsets
-            from the line where this function is called. Defaults to False.
-        backup (bool, optional): Whether to create a `.bak` backup of the original
-            file before writing changes. Defaults to True.
-        dry_run (bool, optional): If True, performs no actual file modification and
-            instead returns a dictionary mapping line numbers to their commented versions.
-            Useful for previewing changes. Defaults to False.
+        linenos (list[int], optional): List of individual line numbers to comment.
+            Ignored if `from_lineno` and `to_lineno` are provided.
+        from_lineno (int, optional): Start of a line range (inclusive).
+        to_lineno (int, optional): End of a line range (inclusive).
+        relative (bool, optional): Whether the provided line numbers or range are
+            relative to the line where this function is called. Defaults to False.
+        backup (bool, optional): If True, creates a `.bak` backup of the file
+            before modifying. Defaults to True.
+        dry_run (bool, optional): If True, doesn't modify the file and instead
+            returns a dict of line numbers and their commented versions.
 
     Returns:
         dict[int, str] | None: If `dry_run` is True, returns a dictionary mapping
-        the target line numbers to their modified (commented) versions.
-        Otherwise, returns None.
+        the affected line numbers to their modified versions. Otherwise, returns None.
 
     Raises:
-        RuntimeError: If an error occurs while writing the updated file.
+        RuntimeError: If writing to the file fails.
 
     Notes:
-        - This function modifies the file in-place unless `dry_run` is True.
-        - Use with caution: modifying the source file of a running script can be
-          powerful but also dangerous.
+        - Line numbers are zero-based internally but expected to be one-based
+          when passed by the user (i.e., line 1 = first line of file).
+        - Use with caution: this modifies the file in which it is called.
     """
     frame = inspect.currentframe()
     prev_frame = frame.f_back
@@ -478,9 +479,17 @@ def comment_lines_by_lineno(
     call_line_number = frameinfo.lineno
 
     with open(filename, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+        lines = f.read().splitlines()
 
     modified_lines = lines.copy()
+
+    # Determine target lines
+    if from_lineno is not None and to_lineno is not None:
+        linenos = list(range(from_lineno, to_lineno + 1))
+    elif linenos is None:
+        raise ValueError(
+            "Either 'linenos' or both 'from_lineno' and 'to_lineno' must be provided."
+        )
 
     if relative:
         linenos = [x + call_line_number for x in linenos]
@@ -488,31 +497,30 @@ def comment_lines_by_lineno(
     def comment_preserving_indent(line):
         return re.sub(r"^(\s*)", r"\1# ", line)
 
+    dry = {}
     for x in linenos:
-        modified_lines[x] = comment_preserving_indent(modified_lines[x])
+        if x < 1 or x > len(modified_lines):
+            raise IndexError(f"Line number {x} is out of range.")
+        idx = x - 1  # Convert to 0-based index
+        modified_lines[idx] = comment_preserving_indent(modified_lines[idx])
+        if dry_run:
+            dry[x] = modified_lines[idx]
 
-    new_content = "".join(modified_lines)
-
-    if not dry_run:
-        # Optional backup
-        if backup:
-            backup_path = filename + ".bak"
-            shutil.copy2(filename, backup_path)
-
-        # Write safely to a temp file and move it into place
-        try:
-            with tempfile.NamedTemporaryFile(
-                "w", delete=False, encoding="utf-8"
-            ) as tmp:
-                tmp.write(new_content)
-                temp_name = tmp.name
-            shutil.move(temp_name, filename)
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
-            )
-    else:
-        dry = {}
-        for x in linenos:
-            dry[x] = comment_preserving_indent(modified_lines[x])
+    if dry_run:
         return dry
+
+    new_content = "\n".join(modified_lines)
+
+    if backup:
+        backup_path = filename + ".bak"
+        shutil.copy2(filename, backup_path)
+
+    try:
+        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
+            tmp.write(new_content)
+            temp_name = tmp.name
+        shutil.move(temp_name, filename)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+        )

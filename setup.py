@@ -30,7 +30,7 @@ DESCRIPTION = (
 # Setting up
 setup(
     name="easy_tasks",
-    version="0.0.52",
+    version="0.0.53",
     author="André Herber",
     author_email="andre.herber.programming@gmail.com",
     # url="https://github.com/ICreedenI/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",

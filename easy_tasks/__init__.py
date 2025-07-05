@@ -22,6 +22,7 @@ from .string_transformation import (
     replace_in_file,
     comment_lines_in_file,
     comment_lines_by_lineno,
+    remove_lines_by_lineno,
 )
 from .unpack import unpack_list
 from .list_printer import pretty_print_list, pretty_print_nested_list, get_var_names
@@ -57,4 +58,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.52"
+__version__ = "0.0.53"

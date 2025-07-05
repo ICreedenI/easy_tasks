@@ -525,3 +525,99 @@ def comment_lines_by_lineno(
         raise RuntimeError(
             f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
         )
+
+
+def remove_lines_by_lineno(
+    linenos: list[int] = None,
+    from_lineno: int = None,
+    to_lineno: int = None,
+    relative: bool = False,
+    backup: bool = True,
+    dry_run: bool = False,
+):
+    """
+    Remove specific lines from the source file in which this function is called.
+
+    Lines can be specified either as a list (`linenos`) or as a range defined by
+    `from_lineno` and `to_lineno`. All line numbers are one-based (i.e., line 1 is
+    the first line of the file) and can optionally be relative to the call site.
+
+    Args:
+        linenos (list[int], optional): List of individual line numbers to remove.
+            Ignored if both `from_lineno` and `to_lineno` are provided.
+        from_lineno (int, optional): Start of the line range to remove (inclusive).
+        to_lineno (int, optional): End of the line range to remove (inclusive).
+        relative (bool, optional): If True, interpret all line numbers as relative
+            to the line where this function is called. Defaults to False.
+        backup (bool, optional): If True, create a `.bak` backup of the original file
+            before writing changes. Defaults to True.
+        dry_run (bool, optional): If True, do not modify the file and return the
+            removed lines instead. Defaults to False.
+
+    Returns:
+        dict[int, str] | None: If `dry_run` is True, returns a dictionary mapping
+        each removed line number to its original content (sorted by line number).
+        Otherwise, returns None.
+
+    Raises:
+        ValueError: If neither `linenos` nor a valid `from_lineno` and `to_lineno` range is provided.
+        IndexError: If any specified line number is out of bounds.
+        RuntimeError: If writing to the file fails.
+
+    Notes:
+        - This function modifies the file in-place unless `dry_run` is True.
+        - Use with caution, especially if calling from within the file being modified.
+    """
+    frame = inspect.currentframe()
+    prev_frame = frame.f_back
+    frameinfo = inspect.getframeinfo(prev_frame)
+    filename = frameinfo.filename
+    call_line_number = frameinfo.lineno
+
+    with open(filename, "r", encoding="utf-8") as f:
+        lines = f.read().splitlines()
+
+    modified_lines = lines.copy()
+
+    # Determine target lines
+    if from_lineno is not None and to_lineno is not None:
+        linenos = list(range(from_lineno, to_lineno + 1))
+    elif linenos is None:
+        raise ValueError(
+            "Either 'linenos' or both 'from_lineno' and 'to_lineno' must be provided."
+        )
+
+    if relative:
+        linenos = [x + call_line_number for x in linenos]
+
+    dry = {}
+    for x in linenos[::-1]:
+        if x < 1 or x > len(modified_lines):
+            raise IndexError(
+                f"Line number {x} is out of range. len(modified_lines): {len(modified_lines)}"
+            )
+        idx = x - 1  # Convert to 0-based index
+        line = modified_lines.pop(idx)
+        if dry_run:
+            dry[x] = line
+    dry = {k: v for k, v in sorted(dry.items(), key=lambda x: x[0])}
+
+    new_content = "\n".join(modified_lines)
+
+    if not dry_run:
+        if backup:
+            backup_path = filename + ".bak"
+            shutil.copy2(filename, backup_path)
+
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w", delete=False, encoding="utf-8"
+            ) as tmp:
+                tmp.write(new_content)
+                temp_name = tmp.name
+            shutil.move(temp_name, filename)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+            )
+    return dry

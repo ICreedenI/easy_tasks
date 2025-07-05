@@ -206,7 +206,9 @@ def insert_into_file(
                 temp_name = tmp.name
             shutil.move(temp_name, filepath)
         except Exception as e:
-            raise RuntimeError(f"Failed to write safely: {e}")
+            raise RuntimeError(
+                f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+            )
         return new_content
 
 
@@ -313,7 +315,9 @@ def replace_in_file(
                 temp_name = tmp.name
             shutil.move(temp_name, filepath)
         except Exception as e:
-            raise RuntimeError(f"Failed to write safely: {e}")
+            raise RuntimeError(
+                f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+            )
         return new_content
 
 
@@ -424,4 +428,91 @@ def comment_lines_in_file(
             temp_name = tmp.name
         shutil.move(temp_name, filename)
     except Exception as e:
-        raise RuntimeError(f"Failed to write safely: {e}")
+        raise RuntimeError(
+            f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+        )
+
+
+def comment_lines_by_lineno(
+    linenos: list,
+    relative: bool = False,
+    backup: bool = True,
+    dry_run: bool = False,
+):
+    """
+    Comments out specific lines in the source file of the calling script.
+
+    This function uses stack inspection to locate the source file and line number
+    of the code that called it, then comments out the specified lines in that file.
+    Each commented line will retain its original indentation, with a "# " inserted
+    after any leading whitespace.
+
+    Args:
+        linenos (list[int]): Line numbers to comment. These can be absolute or
+            relative to the calling line, depending on the `relative` flag.
+        relative (bool, optional): If True, `linenos` are interpreted as offsets
+            from the line where this function is called. Defaults to False.
+        backup (bool, optional): Whether to create a `.bak` backup of the original
+            file before writing changes. Defaults to True.
+        dry_run (bool, optional): If True, performs no actual file modification and
+            instead returns a dictionary mapping line numbers to their commented versions.
+            Useful for previewing changes. Defaults to False.
+
+    Returns:
+        dict[int, str] | None: If `dry_run` is True, returns a dictionary mapping
+        the target line numbers to their modified (commented) versions.
+        Otherwise, returns None.
+
+    Raises:
+        RuntimeError: If an error occurs while writing the updated file.
+
+    Notes:
+        - This function modifies the file in-place unless `dry_run` is True.
+        - Use with caution: modifying the source file of a running script can be
+          powerful but also dangerous.
+    """
+    frame = inspect.currentframe()
+    prev_frame = frame.f_back
+    frameinfo = inspect.getframeinfo(prev_frame)
+    filename = frameinfo.filename
+    call_line_number = frameinfo.lineno
+
+    with open(filename, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    modified_lines = lines.copy()
+
+    if relative:
+        linenos = [x + call_line_number for x in linenos]
+
+    def comment_preserving_indent(line):
+        return re.sub(r"^(\s*)", r"\1# ", line)
+
+    for x in linenos:
+        modified_lines[x] = comment_preserving_indent(modified_lines[x])
+
+    new_content = "".join(modified_lines)
+
+    if not dry_run:
+        # Optional backup
+        if backup:
+            backup_path = filename + ".bak"
+            shutil.copy2(filename, backup_path)
+
+        # Write safely to a temp file and move it into place
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w", delete=False, encoding="utf-8"
+            ) as tmp:
+                tmp.write(new_content)
+                temp_name = tmp.name
+            shutil.move(temp_name, filename)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to write safely: {e}\nTemporary file at: {temp_name}"
+            )
+    else:
+        dry = {}
+        for x in linenos:
+            dry[x] = comment_preserving_indent(modified_lines[x])
+        return dry

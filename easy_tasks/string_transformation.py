@@ -2,6 +2,7 @@ from typing import Iterable, List, Union
 import inspect
 import shutil
 import tempfile
+import re
 
 
 def upper_case_first_letter_of_word(String: str, lower_case_words: list = []):

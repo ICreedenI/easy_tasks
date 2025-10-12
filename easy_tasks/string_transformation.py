@@ -388,16 +388,6 @@ def comment_lines_in_file(
         # Search from top up to the call line
         last_match_index = None
         for i in range(call_line_number - 1):
-            if keyword in lines[i]:
-                from var_print import varp
-
-                varp(
-                    lines[i],
-                    keyword,
-                    keyword == lines[i].strip(),
-                    repr(lines[i]),
-                    repr(keyword),
-                )
             if match_conditions(lines[i]):
                 last_match_index = i
 

@@ -58,4 +58,4 @@ from .filesystem import (
 from .stoppable_thread import ThreadWithExc, StoppableThread
 
 
-__version__ = "0.0.54"
+__version__ = "0.0.55"

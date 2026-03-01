@@ -151,6 +151,7 @@ def insert_into_file(
     min_lineno: int = 0,
     max_lineno: int = -1,
     backup: bool = True,
+    encoding: str = "utf-8",
 ):
     """
     Inserts content into a file at the position of a chained marker sequence.
@@ -176,7 +177,7 @@ def insert_into_file(
         str|None. The new content is returned if successful. The file is modified in-place if successful.
     """
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, "r", encoding=encoding) as f:
             content = f.read()
     except Exception as e:
         raise RuntimeError(f"Failed to read file: {e}")
@@ -201,10 +202,10 @@ def insert_into_file(
         # Write safely to a temp file and move it into place
         try:
             with tempfile.NamedTemporaryFile(
-                "w", delete=False, encoding="utf-8"
+                "w", delete=False, encoding=encoding
             ) as tmp:
-                tmp.write(new_content)
                 temp_name = tmp.name
+                tmp.write(new_content)
             shutil.move(temp_name, filepath)
         except Exception as e:
             raise RuntimeError(
@@ -271,6 +272,7 @@ def replace_in_file(
     min_lineno: int = 0,
     max_lineno: int = -1,
     backup: bool = True,
+    encoding: str = "utf-8",
 ):
     """
     Replaces the final marker in a matched marker chain with new content.
@@ -292,7 +294,7 @@ def replace_in_file(
         str|None. The new content is returned if successful. The file is modified in-place if successful.
     """
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, "r", encoding=encoding) as f:
             content = f.read()
     except Exception as e:
         raise RuntimeError(f"Failed to read file: {e}")
@@ -310,7 +312,7 @@ def replace_in_file(
         # Write safely to a temp file and move it into place
         try:
             with tempfile.NamedTemporaryFile(
-                "w", delete=False, encoding="utf-8"
+                "w", delete=False, encoding=encoding
             ) as tmp:
                 tmp.write(new_content)
                 temp_name = tmp.name
@@ -331,6 +333,7 @@ def comment_lines_in_file(
     does_not_include: Union[str, List[str], None] = None,
     filepath: str | None = None,
     backup: bool = True,
+    encoding: str = "utf-8",
 ):
     """
     Adds or removes comments on lines in the current file that contain a specified keyword,
@@ -364,7 +367,7 @@ def comment_lines_in_file(
     if filepath:
         filename = filepath
 
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding=encoding) as f:
         lines = f.readlines()
 
     modified_lines = lines.copy()
@@ -424,7 +427,7 @@ def comment_lines_in_file(
 
     # Write safely to a temp file and move it into place
     try:
-        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
+        with tempfile.NamedTemporaryFile("w", delete=False, encoding=encoding) as tmp:
             tmp.writelines(modified_lines)
             temp_name = tmp.name
         shutil.move(temp_name, filename)
@@ -441,6 +444,7 @@ def comment_lines_by_lineno(
     relative: bool = False,
     backup: bool = True,
     dry_run: bool = False,
+    encoding: str = "utf-8",
 ):
     """
     Comments out specific lines in the source file of the calling script.
@@ -479,7 +483,7 @@ def comment_lines_by_lineno(
     filename = frameinfo.filename
     call_line_number = frameinfo.lineno
 
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, "r", encoding=encoding) as f:
         lines = f.read().splitlines()
 
     modified_lines = lines.copy()
@@ -517,7 +521,7 @@ def comment_lines_by_lineno(
         shutil.copy2(filename, backup_path)
 
     try:
-        with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
+        with tempfile.NamedTemporaryFile("w", delete=False, encoding=encoding) as tmp:
             tmp.write(new_content)
             temp_name = tmp.name
         shutil.move(temp_name, filename)
@@ -534,6 +538,7 @@ def remove_lines_by_lineno(
     relative: bool = False,
     backup: bool = True,
     dry_run: bool = False,
+    encoding: str = "utf-8",
 ):
     """
     Remove specific lines from the source file in which this function is called.
@@ -574,7 +579,7 @@ def remove_lines_by_lineno(
     filename = frameinfo.filename
     call_line_number = frameinfo.lineno
 
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, "r", encoding=encoding) as f:
         lines = f.read().splitlines()
 
     modified_lines = lines.copy()
@@ -611,7 +616,7 @@ def remove_lines_by_lineno(
 
         try:
             with tempfile.NamedTemporaryFile(
-                "w", delete=False, encoding="utf-8"
+                "w", delete=False, encoding=encoding
             ) as tmp:
                 tmp.write(new_content)
                 temp_name = tmp.name

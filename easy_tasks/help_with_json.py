@@ -1,10 +1,8 @@
 import json
 
 
-
-
-def dump_as_json(data, path):
-    with open(path, "w") as f:
+def dump_as_json(data, path, encoding="utf-8"):
+    with open(path, "w", encoding=encoding) as f:
         json.dump(data, f, indent=4)
 
 
@@ -32,8 +30,8 @@ def strip_json_comments(string: str):
     return cleaned_json_str
 
 
-def get_from_json(file_path) -> dict:
-    with open(file_path, 'r') as file:
+def get_from_json(file_path, encoding="utf-8") -> dict:
+    with open(file_path, 'r', encoding=encoding) as file:
         data = file.read()
     
     try:

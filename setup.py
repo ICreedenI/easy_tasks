@@ -14,9 +14,10 @@
 # twine upload --verbose --skip-existing dist/*
 # twine upload --verbose dist/*
 
-from setuptools import setup, find_packages
 import codecs
 import os
+
+from setuptools import find_packages, setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -30,7 +31,7 @@ DESCRIPTION = (
 # Setting up
 setup(
     name="easy_tasks",
-    version="0.0.57",
+    version="0.0.58",
     author="André Herber",
     author_email="andre.herber.programming@gmail.com",
     # url="https://github.com/ICreedenI/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",

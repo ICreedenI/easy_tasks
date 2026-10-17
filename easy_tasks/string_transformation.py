@@ -1,8 +1,9 @@
-from typing import Iterable, List, Union
 import inspect
-import shutil
-import tempfile
 import re
+import shutil
+import sys
+import tempfile
+from typing import Iterable, List, Union
 
 
 def upper_case_first_letter_of_word(String: str, lower_case_words: list = []):
@@ -56,6 +57,20 @@ def find_chained_markers(text, markers):
         if current_index == -1:
             return -1  # Chain is broken
     return current_index  # Index of the last marker
+
+
+def _line_bounds(text: str, start: int, end: int) -> tuple[int, int]:
+    """
+    Returns the boundaries of the line(s) covered by text[start:end].
+
+    The returned end index points at the terminating line break (or len(text)),
+    so the line break itself is not part of the span.
+    """
+    line_start = text.rfind("\n", 0, start) + 1
+    line_end = text.find("\n", max(end - 1, start))
+    if line_end == -1:
+        line_end = len(text)
+    return line_start, line_end
 
 
 def insert_into_string(
@@ -200,6 +215,7 @@ def insert_into_file(
             shutil.copy2(filepath, backup_path)
 
         # Write safely to a temp file and move it into place
+        temp_name = None
         try:
             with tempfile.NamedTemporaryFile(
                 "w", delete=False, encoding=encoding
@@ -221,22 +237,31 @@ def replace_in_string(
     min_lineno: int = 0,
     max_lineno: int = -1,
     backup: bool = True,
+    entire_line: bool = False,
+    preserve_indent: bool = False,
 ) -> str | None:
     """
     Replaces the final marker in a matched marker chain with new content.
 
     Searches for a sequence of markers appearing in order (chained) within the specified
     line range. Once found, replaces only the last marker in the chain with the given
-    replacement string. All other parts of the file remain unchanged.
+    replacement string (or the entire line containing it, see `entire_line`).
+    All other parts of the content remain unchanged.
 
     Parameters:
-        filepath (str): Path to the file to modify.
+        content (str): The text to modify. (not in place)
         markers (str or list[str]): A single string or list of strings representing the marker
             sequence to match. All markers must be found in order.
         replacement (str): The text that replaces the final marker in the chain.
         min_lineno (int): Minimum line number (0-based, inclusive) to consider when searching for the marker.
         max_lineno (int): Maximum line number (exclusive). Use -1 to search to the end of the file.
-        backup (bool): If True, create a backup copy of the original file as <filename>.bak.
+        backup (bool): Unused here; kept for signature compatibility with replace_in_file.
+        entire_line (bool): If True, replace the whole line containing the final marker instead
+            of only the marker. The line break is kept. If the marker spans several lines,
+            all of them are replaced.
+        preserve_indent (bool): Only used with entire_line=True. Prefixes the leading whitespace of the
+            replaced line to every non-empty line of `replacement`, so pass the replacement
+            without indentation.
 
     Returns:
         str|None. The new content is returned if successful.
@@ -259,8 +284,18 @@ def replace_in_string(
         return  # Chain broken
 
     pos += marker_index
+    end = pos + len(markers[-1])
 
-    new_content = content[:pos] + replacement + content[pos + len(markers[-1]) :]
+    if entire_line:
+        pos, end = _line_bounds(content, pos, end)
+        if preserve_indent:
+            indent = re.match(r"[ \t]*", content[pos:end]).group()
+            replacement = "\n".join(
+                indent + line if line.strip() else line
+                for line in replacement.split("\n")
+            )
+
+    new_content = content[:pos] + replacement + content[end:]
 
     return new_content
 
@@ -273,13 +308,16 @@ def replace_in_file(
     max_lineno: int = -1,
     backup: bool = True,
     encoding: str = "utf-8",
+    entire_line: bool = False,
+    preserve_indent: bool = False,
 ):
     """
     Replaces the final marker in a matched marker chain with new content.
 
     Searches for a sequence of markers appearing in order (chained) within the specified
     line range. Once found, replaces only the last marker in the chain with the given
-    replacement string. All other parts of the file remain unchanged.
+    replacement string (or the entire line containing it, see `entire_line`).
+    All other parts of the file remain unchanged.
 
     Parameters:
         filepath (str): Path to the file to modify.
@@ -289,6 +327,12 @@ def replace_in_file(
         min_lineno (int): Minimum line number (0-based, inclusive) to consider when searching for the marker.
         max_lineno (int): Maximum line number (exclusive). Use -1 to search to the end of the file.
         backup (bool): If True, create a backup copy of the original file as <filename>.bak.
+        entire_line (bool): If True, replace the whole line containing the final marker instead
+            of only the marker. The line break is kept. If the marker spans several lines,
+            all of them are replaced.
+        preserve_indent (bool): Only used with entire_line=True. Prefixes the leading whitespace of the
+            replaced line to every non-empty line of `replacement`, so pass the replacement
+            without indentation.
 
     Returns:
         str|None. The new content is returned if successful. The file is modified in-place if successful.
@@ -300,22 +344,29 @@ def replace_in_file(
         raise RuntimeError(f"Failed to read file: {e}")
 
     new_content = replace_in_string(
-        content, markers, replacement, min_lineno, max_lineno
+        content,
+        markers,
+        replacement,
+        min_lineno,
+        max_lineno,
+        entire_line=entire_line,
+        preserve_indent=preserve_indent,
     )
 
-    if new_content:
+    if new_content is not None:
         # Optional backup
         if backup:
             backup_path = filepath + ".bak"
             shutil.copy2(filepath, backup_path)
 
         # Write safely to a temp file and move it into place
+        temp_name = None
         try:
             with tempfile.NamedTemporaryFile(
                 "w", delete=False, encoding=encoding
             ) as tmp:
-                tmp.write(new_content)
                 temp_name = tmp.name
+                tmp.write(new_content)
             shutil.move(temp_name, filepath)
         except Exception as e:
             raise RuntimeError(
@@ -358,9 +409,7 @@ def comment_lines_in_file(
     if isinstance(does_not_include, str):
         does_not_include = [does_not_include]
 
-    frame = inspect.currentframe()
-    prev_frame = frame.f_back
-    frameinfo = inspect.getframeinfo(prev_frame)
+    frameinfo = inspect.getframeinfo(sys._getframe(1))
     filename = frameinfo.filename
     call_line_number = frameinfo.lineno
 
@@ -426,6 +475,7 @@ def comment_lines_in_file(
         shutil.copy2(filename, backup_path)
 
     # Write safely to a temp file and move it into place
+    temp_name = None
     try:
         with tempfile.NamedTemporaryFile("w", delete=False, encoding=encoding) as tmp:
             tmp.writelines(modified_lines)
@@ -438,9 +488,9 @@ def comment_lines_in_file(
 
 
 def comment_lines_by_lineno(
-    linenos: list[int] = None,
-    from_lineno: int = None,
-    to_lineno: int = None,
+    linenos: list[int] | None = None,
+    from_lineno: int | None = None,
+    to_lineno: int | None = None,
     relative: bool = False,
     backup: bool = True,
     dry_run: bool = False,
@@ -477,9 +527,7 @@ def comment_lines_by_lineno(
           when passed by the user (i.e., line 1 = first line of file).
         - Use with caution: this modifies the file in which it is called.
     """
-    frame = inspect.currentframe()
-    prev_frame = frame.f_back
-    frameinfo = inspect.getframeinfo(prev_frame)
+    frameinfo = inspect.getframeinfo(sys._getframe(1))
     filename = frameinfo.filename
     call_line_number = frameinfo.lineno
 
@@ -520,6 +568,7 @@ def comment_lines_by_lineno(
         backup_path = filename + ".bak"
         shutil.copy2(filename, backup_path)
 
+    temp_name = None
     try:
         with tempfile.NamedTemporaryFile("w", delete=False, encoding=encoding) as tmp:
             tmp.write(new_content)
@@ -532,9 +581,9 @@ def comment_lines_by_lineno(
 
 
 def remove_lines_by_lineno(
-    linenos: list[int] = None,
-    from_lineno: int = None,
-    to_lineno: int = None,
+    linenos: list[int] | None = None,
+    from_lineno: int | None = None,
+    to_lineno: int | None = None,
     relative: bool = False,
     backup: bool = True,
     dry_run: bool = False,
@@ -573,9 +622,7 @@ def remove_lines_by_lineno(
         - This function modifies the file in-place unless `dry_run` is True.
         - Use with caution, especially if calling from within the file being modified.
     """
-    frame = inspect.currentframe()
-    prev_frame = frame.f_back
-    frameinfo = inspect.getframeinfo(prev_frame)
+    frameinfo = inspect.getframeinfo(sys._getframe(1))
     filename = frameinfo.filename
     call_line_number = frameinfo.lineno
 
@@ -614,6 +661,7 @@ def remove_lines_by_lineno(
             backup_path = filename + ".bak"
             shutil.copy2(filename, backup_path)
 
+        temp_name = None
         try:
             with tempfile.NamedTemporaryFile(
                 "w", delete=False, encoding=encoding
